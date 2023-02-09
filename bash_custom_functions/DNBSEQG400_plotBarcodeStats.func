@@ -1,0 +1,74 @@
+function DNBSEQG400_plotBarcodeStats() {
+
+# SP@NC, updated 2023-02-09
+# creates a plot from the data in L0X/BarcodeStat.txt
+# in linear scale, plot the correct and corrected barcode counts stacked
+# stacked barplots are not possible in log-scale
+# + adapted to new MGI output
+# + remove header and total lines
+
+if [ $# -lt 1 ]; then
+ echo
+ echo "## usage: DNBSEQG400_plotBarcodeStat <BarcodeStat.txt> <-l (logscale)>"
+ return
+fi
+
+countfile=${1:-"BarcodeStat.txt"}
+source=${countfile/\//_}
+last=$(wc -l < "${countfile}")
+bcnum=$(echo ${last} -2 | bc)
+
+# subset data to /tmp
+# awk '$1~/barcode/{print $0}' ${countfile} > /tmp/data.txt
+awk -v last="${last}" 'BEGIN{FS="\t";OFS="\t"}{if (NR>1 && NR<last) print $0}' ${countfile} > /tmp/data.txt
+
+# debug
+# cat /tmp/data.txt
+
+if [[ "${@: -1}" == "-l" ]]; then
+outfile="${source%%.txt}_log.pdf"
+# gnuplot
+gnuplot <<- EOF
+set terminal pdf
+set datafile separator "\t"
+set title "MGI barcode distribution from ${source}" noenhanced
+set xrange [1:"${bcnum}"]
+set xlabel 'barcodes'
+set ylabel 'read count (log-scale)'
+set tics font ",8"
+set logscale y 10
+set ytics nomirror
+set style fill solid 1 border
+set style data boxes
+set format y "%.0sx10^{%T}"
+unset key
+set output "${outfile}"
+plot "/tmp/data.txt" using 4
+EOF
+
+else
+outfile="${source%%.txt}.pdf"
+# gnuplot
+gnuplot <<- EOF
+set terminal pdf
+set datafile separator "\t"
+set style data histogram
+set style histogram rowstacked
+set title "MGI barcode distribution from ${source}" noenhanced
+set xrange [1:"${bcnum}"]
+set xlabel 'barcodes'
+set ylabel 'read count'
+set tics font ",8"
+${scale}
+unset xtics
+set key font ",8"
+set ytics nomirror
+set style fill solid 1 border
+set format y "%.0sx10^{%T}"
+set output "${outfile}"
+plot "/tmp/data.txt" using 2 t "correct", '' using 3:xticlabels(1) t "corrected"
+EOF
+
+fi
+
+}
