@@ -1,6 +1,6 @@
-# aviti-tools
+# MGI-tools
 [(Nucleomics-VIB)](https://github.com/Nucleomics-VIB)
-![aviti-tools](pictures/Aviti.png) - Aviti-Tools
+![mgi-tools](pictures/MGI.png) - MGI-Tools
 ==========
 
 *All tools presented below have only been tested by me and may contain bugs, please let me know if you find some. Each tool relies on dependencies normally listed at the top of the code (cpan for perl and cran for R will help you add them)*
