@@ -8,9 +8,9 @@ use Data::Dumper;
 use FileHandle;
 
 # SP@NC, 2023-02-09 
-# small edits:
-# replace gzip compression with scripts by pigz parallel compression in-place using 8 threads
-
+# + small edits:
+# -+ replace gzip post-compression through shell scripts by gzip in-pipe compression
+# + handle undef $correctedBar{$barhash{$barseq}} in case of errNum==0
 
 my $usage=<<USAGE;
 	Usage:
@@ -78,33 +78,39 @@ unless(-d $outdir){
 $outdir=abs_path($outdir);
 chomp($outdir);
 open my $fh,$bl or die "$bl No such file, check it !\n$!";
-#if(uc($compress) eq 'Y'){
-#	open $am1,"|gzip -9 >$outdir/$prefix\_ambiguous_1.fq.gz" or die $!;
-#	open $am2,"|gzip -9 >$outdir/$prefix\_ambiguous_2.fq.gz" or die $!;
-#}else{
-open $am1,">$outdir/$prefix\_unbarcoded_1.fq" or die $!;
-open $am2,">$outdir/$prefix\_unbarcoded_2.fq" or die $!;
+
+# create unbarcoded output files
+if(uc($compress) eq 'Y'){
+	open $am1,"|gzip -9 >$outdir/$prefix\_ambiguous_1.fq.gz" or die $!;
+	open $am2,"|gzip -9 >$outdir/$prefix\_ambiguous_2.fq.gz" or die $!;
+}else{
+    open $am1,">$outdir/$prefix\_unbarcoded_1.fq" or die $!;
+    open $am2,">$outdir/$prefix\_unbarcoded_2.fq" or die $!;
+}
 push @fq,"$outdir/$prefix\_unbarcoded_1.fq";
 push @fq,"$outdir/$prefix\_unbarcoded_2.fq";
-#}
+
+# create summary files 
 open my $BS,">$outdir/BarcodeStat.txt" or die $!;
 open my $SS,">$outdir/TagStat.txt" or die $!;
 
+# add header to summary files
 print $BS "#SpeciesNO\tCorrect\tCorrected\tTotal\tPct\n";
 print $SS "#Sequence\tSpeciesNO\treadCount\tPct\n";
 
+# loop through all barcode pairs from provided list
 while(<$fh>){	#1	ATGCATCTAA	TATAGCCTAG
 	next if /^#/;
 	chomp;
 	my @tmp=split /\s+/,$_;
 	my $barcode_seq;
-        # if option rc was set to 'Y'
+    # if option rc was set to 'Y'
 	if(uc($rc) eq 'Y'){
-                # reverse the barcodes
+        # reverse the barcodes
 		$tmp[1]=reverse(uc($tmp[1]));	#AATCTACGTA
 		$tmp[2]=reverse(uc($tmp[2]));	#GATCCGATAT
 		$barcode_seq=$tmp[2].$tmp[1];	#GATCCGATATAATCTACGTA
-                # complement the merged sequence
+        # complement the merged sequence
 		$barcode_seq=~tr/ATCGN/TAGCN/;	#CTAGGCTATATTAGATGCAT
 	}else{
 		$tmp[1]=uc($tmp[1]);			#ATGCATCTAA
@@ -114,27 +120,37 @@ while(<$fh>){	#1	ATGCATCTAA	TATAGCCTAG
 	$oribar{$barcode_seq} = 1;
 	$barcode_len1=length($tmp[1]);$barcode_len2=length($tmp[2]);
 	&bar_hash($barcode_seq,$tmp[0],$errNum,\%barhash);
-	open $oh{$barhash{$barcode_seq}}[0],">$outdir/$prefix\_$tmp[0]\_1.fq" or die $!;
-	open $oh{$barhash{$barcode_seq}}[1],">$outdir/$prefix\_$tmp[0]\_2.fq" or die $!;
+	
+	# create output handles
+	if(uc($compress) eq 'Y'){
+ 	    open $oh{$barhash{$barcode_seq}}[0],"|gzip>$outdir/$prefix\_$tmp[0]\_1.fq.gz" or die $!;
+	    open $oh{$barhash{$barcode_seq}}[1],"|gzip>$outdir/$prefix\_$tmp[0]\_2.fq.gz" or die $!;
+    }else{
+        open $oh{$barhash{$barcode_seq}}[0],">$outdir/$prefix\_$tmp[0]\_1.fq" or die $!;
+	    open $oh{$barhash{$barcode_seq}}[1],">$outdir/$prefix\_$tmp[0]\_2.fq" or die $!;
+    }	
 	push @fq,"$outdir/$prefix\_$tmp[0]\_1.fq";
 	push @fq,"$outdir/$prefix\_$tmp[0]\_2.fq";
 }
 close $fh;
+
 $barcode_len=$barcode_len1+$barcode_len2;
 for my $line_seq(keys %barhash){
 		$mis_barNum{$line_seq} ++;
-		if ($mis_barNum{$line_seq} >=2){print STDERR "Set a smaller mismatch value because of same barcodes\($barhash{$line_seq}\t$line_seq\) are same!\n";exit;}
+		if ($mis_barNum{$line_seq} >=2){
+			print STDERR "Set a smaller mismatch value because of same barcodes\($barhash{$line_seq}\t$line_seq\) are same!\n";
+			exit;
+			}
 }
+
+# read from fastq file(s)
 my($rd1,$rd2);
 if($read2=~/fq$/){
 	open $rd1,$read1 or die $!;
 	open $rd2,$read2 or die $!;
-}
-elsif($read2=~/fq.gz$/){
-	#open $rd1,"gzip -dc $read1|" or die $!;
-	#open $rd2,"gzip -dc $read2|" or die $!;
-	open $rd1,"zcat $read1|" or die $!;	#suggested by shengqin
-}   open $rd2,"zcat $read2|" or die $!;	#suggested by shengqin
+}elsif($read2=~/fq.gz$/){
+	open $rd1,"zcat $read1|" or die $!;
+}   open $rd2,"zcat $read2|" or die $!;
 
 while(<$rd1>){
 	my $head1= $_;
@@ -151,21 +167,17 @@ while(<$rd1>){
 	$tagNum{$barseq} ++;
 	$ori_tag{$barseq} = substr($seq2,$fc-1,$barcode_len1+1)."-".substr($seq2,$fc+$barcode_len1-1,$barcode_len2+1);
 	if(exists $barhash{$barseq}){
+	    # trim barcode from seq and qual lines
 		my $spitseq2=substr($seq2,0,$fc-1).substr($seq2,$fc+$barcode_len-1,);
 		my $spitqual2=substr($qual2,0,$fc-1).substr($qual2,$fc+$barcode_len-1,);
-		#my $fh1=$oh{$barhash{$barseq}}[0];my$fh2=$oh{$barhash{$barseq}}[1];
 		$oh{$barhash{$barseq}}[0]->print("$head1\n$seq1\n$plus1\n$qual1\n");
 		$oh{$barhash{$barseq}}[1]->print("$head2\n$spitseq2\n$plus2\n$spitqual2\n");
-		#print $fh1 "$head1\n$seq1\n$plus1\n$qual1\n";
-		#print $fh2 "$head2\n$spitseq2\n$plus2\n$spitqual2\n";
 		if(exists $oribar{$barseq}){
 			$correctBar{$barhash{$barseq}} +=1;
-		}
-		else{
+		}else{
 			$correctedBar{$barhash{$barseq}} +=1;
 		}
-	}
-	else{
+	}else{
 		my $spitseq2=substr($seq2,0,$fc-1).substr($seq2,$fc+$barcode_len-1,);
 		my $spitqual2=substr($qual2,0,$fc-1).substr($qual2,$fc+$barcode_len-1,);
 		print $am1 "$head1\n$seq1\n$plus1\n$qual1\n";
@@ -176,58 +188,41 @@ while(<$rd1>){
 close $rd1;close $rd2;
 close $am1;close $am2;
 
+###############################
+# print results to BarcodeStat
+###############################
+
 my($totalcorrect,$totalcorrected,$totalbarreads,$totalpct);
 for my $seq(sort {$barhash{$a} cmp $barhash{$b}} keys %oribar){
-	my $BartotalReads = $correctBar{$barhash{$seq}}+$correctedBar{$barhash{$seq}};
-	#print $seq,"\t",$barhash{$seq},"\t",$correctBar{$barhash{$seq}},"\t",$correctedBar{$barhash{$seq}},"\n";
+    # when $correctedBar{$barhash{$seq}} is unset => set it to 0
+    if (!$correctedBar{$barhash{$seq}}) {
+        $correctedBar{$barhash{$seq}}=0;
+    }
+    my $BartotalReads = $correctBar{$barhash{$seq}}+$correctedBar{$barhash{$seq}};
 	my $pct = ($BartotalReads/$totalReadsNum)*100;
 	$totalcorrect += $correctBar{$barhash{$seq}};
 	$totalcorrected+=$correctedBar{$barhash{$seq}};
 	$totalbarreads += $BartotalReads;
 	$totalpct += $pct;
-	#print $BS "$barhash{$seq}\t$correctBar{$seq}\t$correctedBar{$seq}\t$BartotalReads\t$pct\n";
 	printf $BS "%s\t%d\t%d\t%d\t%.4f%%\n",$barhash{$seq},$correctBar{$barhash{$seq}},$correctedBar{$barhash{$seq}},$BartotalReads,$pct;
 }
-#print $BS "Total\t$totalcorrect\t$totalcorrected\t$totalbarreads\t$totalpct\n";
 printf $BS "Total\t%d\t%d\t%d\t%.4f%%\n",$totalcorrect,$totalcorrected,$totalbarreads,$totalpct;
 close $BS;
+
+###############################
+# print results to TagStat
+###############################
 
 for my $seq(sort {$tagNum{$b}<=>$tagNum{$a}} keys %tagNum){
 	my $pct=($tagNum{$seq}/$totalReadsNum)*100;
 	if(exists $barhash{$seq}){
-		#print $SS "$seq\t$barhash{$seq}\t$tagNum{$seq}\t$pct\n";
 		printf $SS "%s\t%s\t%d\t%.2f%%\n",$ori_tag{$seq},$barhash{$seq},$tagNum{$seq},$pct;
 	}
 	else{
-		#print $SS "$seq\tunknown\t$tagNum{$seq}\t$pct\n";
 		printf $SS "%s\tunknown\t%d\t%.2f%%\n",$ori_tag{$seq},$tagNum{$seq},$pct;
 	}
 }
 close $SS;
-
-if(uc($compress) eq 'Y'){
-	open my $main,">$outdir/gzip.main.sh" or die $!;
-	for my $fastq(@fq){
-		my $name=basename($fastq);
-		my $gz=$outdir.'/'.$name.'.gz';
-		open my $gzip,">$outdir/$name\_gzip.sh" or die $!;
-		if(-e $gz){
-			system("rm -rf $gz");
-			print $gzip "gzip -9 $fastq \n";
-		}
-		else{
-			print $gzip "gzip -9 $fastq \n";
-		}
-		#system("gzip -9 $fastq");
-		#system("echo -e 'if \[ -e \"$gz\" \]; then \n\trm -rf $gz \nfi\ngzip -9 $fastq ' > $fastq.sh ");
-		print $main "sh $fastq\_gzip.sh &\n";
-		close $gzip;
-	} 
-	close $main;
-	#system("sh $outdir/$prefix\_gzip.sh");
-	#system("rm $outdir/*fq.sh $outdir/$prefix\_gzip.sh ");
-}
-
 
 #=============subroutine==================
 sub bar_hash{
