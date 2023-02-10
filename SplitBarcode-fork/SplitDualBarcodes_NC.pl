@@ -7,7 +7,15 @@ use File::Basename;
 use Data::Dumper;
 use FileHandle;
 
+my $version="1.00, 2023_02_09";
+
 # SP@NC, 2023-02-09 
+#
+# this script runs a modified version of the original 'SplitDualBarcodes.pl'
+# (https://github.com/gateswell/SplitBarcode)
+# this modified version can be found in our repo 
+# (https://github.com/Nucleomics-VIB/mgi-tools)
+#
 # + small edits:
 # -+ replace gzip post-compression through shell scripts by gzip in-pipe compression
 # + handle undef $correctedBar{$barhash{$barseq}} in case of errNum==0
@@ -32,6 +40,8 @@ my $usage=<<USAGE;
 	1	ATGCATCTAA	TATAGCCTAG
 	2	AGCTCTGGAC	CTCTATCGTC
 	===================================
+	
+	REM: VIB-NC version $version adapted from the original SplitDualBarcodes.pl (https://github.com/Nucleomics-VIB/mgi-tools)
 USAGE
 
 #=============global variants=============
@@ -70,9 +80,11 @@ my (%tagNum,$am1,$am2,@fq,$barcode_len,$barcode_len1,$barcode_len2,%ori_tag,%mis
 #=========================
 
 my $name=basename($read2);
+# the following regexp is matching expected MGI folder naming
+# eg V300009631_128A_L01_read_2.fq.gz => V300009631_128A_L01
 $prefix=$1 if $name=~/(.*)\_(\w+)_2\.fq(.gz)?/;
 unless(-d $outdir){
-	print STDERR "$outdir: No such directory, but we will create it\n";
+	print STDERR "creating $outdir folder\n";
 	`mkdir -p $outdir`;
 }
 $outdir=abs_path($outdir);

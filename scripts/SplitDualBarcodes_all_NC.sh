@@ -140,8 +140,8 @@ for fq in "${read1list[@]}"; do
         r1=${fq//L01/L0${l}}
         r2=${r1/_1.fq.gz/_2.fq.gz}
         # add to merge
-        zcat ${r1} >> ${readfolder}/${pfx}_1.fq.gz
-        zcat ${r2} >> ${readfolder}/${pfx}_2.fq.gz
+        zcat ${r1} |gzip -9 >> ${readfolder}/${pfx}_1.fq.gz
+        zcat ${r2} |gzip -9 >> ${readfolder}/${pfx}_2.fq.gz
     done
 done
 

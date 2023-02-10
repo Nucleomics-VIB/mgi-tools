@@ -10,6 +10,7 @@
 #suppressPackageStartupMessages(library("readr"))
 suppressPackageStartupMessages(library("data.table"))
 suppressPackageStartupMessages(library("dplyr"))
+suppressPackageStartupMessages(library("reshape2"))
 suppressPackageStartupMessages(library("ggplot2"))
 suppressPackageStartupMessages(library("optparse"))
 
@@ -56,16 +57,25 @@ write.csv(BarcodeStat, file = outfile, row.names = FALSE)
 # plot barcode densities
 ##############################
 
+plot.data <- BarcodeStat[,1:3] %>% reshape2::melt(id.vars = "#SpeciesNO")
+colnames(plot.data) <- c("barcodes", "type", "count")
+
 outfile <- paste0(input.path, "BarcodeStat_density.pdf", sep="/")
 pdf(file=outfile, width = 10, height = 10, bg = "white")
-ggplot(data=BarcodeStat, aes(x=`#SpeciesNO`, y=Total)) +
-  geom_bar(width=0.7, stat="identity") +
+
+ggplot(plot.data, aes(x = barcodes, y= count, fill = forcats::fct_rev(type))) + 
+  geom_bar(width=0.7,stat = "identity") +
   scale_y_continuous(expand = c(0,0)) +
   coord_flip() +
   theme_bw() +
   theme(axis.text.y=element_text(angle = 0, hjust = 0, size=5)) +
+  theme(legend.title=element_blank()) +
+  theme(legend.position = "top") +
+  theme(legend.key.size = unit(0.25, 'cm')) +
   xlab("barcodes") +
-  ylab("read (pair) count")
+  ylab("read (pair) count") +
+  ggtitle("MGI400 Barcode frequency")
+
 null <- dev.off()
 
 ##############################
