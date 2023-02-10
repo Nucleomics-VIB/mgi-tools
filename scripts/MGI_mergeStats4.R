@@ -8,8 +8,6 @@
 # save resulting merged tables to file
 # plot barcode frequency from the merged BarcodeStat
 
-suppressPackageStartupMessages(library("optparse"))
-#suppressPackageStartupMessages(library("readr"))
 suppressPackageStartupMessages(library("data.table"))
 suppressPackageStartupMessages(library("dplyr"))
 suppressPackageStartupMessages(library("reshape2"))
@@ -17,21 +15,11 @@ suppressPackageStartupMessages(library("ggplot2"))
 
 version <- "v1.00, 2023-02-10"
 
-option_list <- list(
-	make_option(c("-i", "--input"), type="character", default=".",
-		help="input path"), 
-)
-
-# PARSE OPTIONS
-opt <- parse_args(OptionParser(option_list=option_list))
-
-input.path <- ifelse(opt$input, opt$input, ".") 
-
 ##############################
 # merge BarcodeStat.txt files
 ##############################
 
-vectorBarcodeStat <- list.files(path = input.path, 
+vectorBarcodeStat <- list.files(path = '.', 
                 pattern = "BarcodeStat.txt" ,
                 full.names = FALSE, 
                 recursive = TRUE,
@@ -53,7 +41,7 @@ BarcodeStat <- BarcodeStatMerge %>%
 BarcodeStat$Pct <- sprintf("%1.2f%%", 100*BarcodeStat$Total/sum(BarcodeStat$Total))
 
 # save to csv file
-outfile <- paste0(input.path, "BarcodeStat_merged.csv", sep="/")
+outfile <- "BarcodeStat_merged.csv"
 write.csv(BarcodeStat, file = outfile, row.names = FALSE)
 
 ##############################
@@ -63,7 +51,7 @@ write.csv(BarcodeStat, file = outfile, row.names = FALSE)
 plot.data <- BarcodeStat[,1:3] %>% reshape2::melt(id.vars = "#SpeciesNO")
 colnames(plot.data) <- c("barcodes", "type", "count")
 
-outfile <- paste0(input.path, "BarcodeStat_density.pdf", sep="/")
+outfile <- "BarcodeStat_density.pdf"
 pdf(file=outfile, width = 10, height = 10, bg = "white")
 
 ggplot(plot.data, aes(x = barcodes, y= count, fill = forcats::fct_rev(type))) + 
@@ -75,6 +63,7 @@ ggplot(plot.data, aes(x = barcodes, y= count, fill = forcats::fct_rev(type))) +
   theme(legend.title=element_blank()) +
   theme(legend.position = "top") +
   theme(legend.key.size = unit(0.25, 'cm')) +
+  guides(fill = guide_legend(reverse = TRUE)) +
   xlab("barcodes") +
   ylab("read (pair) count") +
   ggtitle("MGI400 Barcode frequency")
@@ -85,7 +74,7 @@ null <- dev.off()
 # merge TagStat.txt files
 ##############################
 
-vectorTagStat <- list.files(path = input.path,
+vectorTagStat <- list.files(path = '.',
                             pattern = "TagStat.txt" ,
                             full.names = FALSE, 
                             recursive = TRUE,
@@ -99,13 +88,14 @@ TagStatMerge$Pct <- rep("0",nrow(TagStatMerge))
 # summarize and sum using dplyr
 TagStat <- TagStatMerge %>% 
   dplyr::group_by(`#Sequence`,SpeciesNO) %>%
-  dplyr::summarise(across(c(readCount), sum)) %>%
+  dplyr::summarise(across(c(readCount), sum), .groups = "drop") %>%
   arrange(desc(readCount))
 
+# add back Pct column
 TagStat$Pct <- sprintf("%1.2f%%", 100*TagStat$readCount/sum(TagStat$readCount))
 
 # save to csv files
-outfile <- paste0(input.path, "TagStat_merged.csv", sep="/")
+outfile <- "TagStat_merged.csv"
 write.csv(TagStat, file = outfile, row.names = FALSE)
 
 # top 100 unknown barcodes
@@ -114,5 +104,5 @@ topUnknown <- TagStat %>%
   arrange(desc(readCount)) %>%
   head(100)
   
-outfile <- paste0(input.path, "TagStat_top100_unknown.csv", sep="/")
+outfile <- "TagStat_top100_unknown.csv"
 write.csv(topUnknown, file = outfile, row.names = FALSE)

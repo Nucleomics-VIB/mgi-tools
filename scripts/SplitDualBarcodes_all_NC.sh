@@ -25,11 +25,12 @@ usage='# Usage: SplitDualBarcodes_all_NC.sh
 # optional -o <path to save result folders and files> (default to current folder)
 # optional -e <max nbr of mismatches with published barcode> (default:0))
 # optional -c <compress the outout to fq.gz (Y/N)> (default Y)
-# optional -rc <barcodes need be reverse-complemented (Y/N)> (default N)>
+# optional -rc <barcodes need be reverse-complemented (Y/N)> (default N)
+# optional -t <threads for merging> (default=8)
 # script version '${version}'
 # [-h for this help]'
 
-while getopts "b:f:i:o:e:c:rc:h" opt; do
+while getopts "b:f:i:o:e:c:rc:t:h" opt; do
   case $opt in
     b)  optb=${OPTARG} ;;
     f)  optf=${OPTARG} ;;
@@ -38,6 +39,7 @@ while getopts "b:f:i:o:e:c:rc:h" opt; do
     e)  opte=${OPTARG} ;;
     c)  optc=${OPTARG} ;;
     rc) optrc=${OPTARG} ;;
+    t)  optt=${OPTARG} ;; 
     h)  echo "${usage}" >&2; exit 0 ;;
     \?) echo "Invalid option: -${OPTARG}" >&2; exit 1 ;;
     *)  echo "this command requires arguments, try -h" >&2; exit 1 ;;
@@ -88,6 +90,7 @@ if [ -z "${listlen}" ] || [ "${listlen}" -gt 4 ]; then
 fi
 
 echo "# Demultiplexing ${listlen} Lanes in parallel" >&2
+echo "# !! each job uses several threads and file handles !!" >&2
 
 # set other parameters for SplitDualBarcodes_NC.pl
 b=${optb}
@@ -96,9 +99,12 @@ e=${opte:-0}
 c=${optc:-"Y"}
 rc=${optrc:-"N"}
 
-##########################
-# run 4 lanes in parallel
-##########################
+# other parameters
+thr=${optt:-8}
+
+################################
+# run up to 4 lanes in parallel
+################################
 
 parallel --plus -j 4 SplitDualBarcodes_NC.pl \
   -r1 {} \
@@ -130,21 +136,53 @@ readarray -t read1list < <(find "${l1folder}" -name "*_1.fq.gz")
 readfolder="${outfolder}/merged_reads_e${e}_f${f}"
 mkdir -p ${readfolder}
 
-for fq in "${read1list[@]}"; do
-    pfx=$(basename ${fq%_1.fq.gz})
-    pfx=${pfx/_L01/_merged}
-    # empty if existing
-    cat /dev/null > ${readfolder}/${pfx}_1.fq.gz
-    cat /dev/null > ${readfolder}/${pfx}_2.fq.gz
-    
-    for l in $(seq 1 ${lanecnt}); do
-        r1=${fq//L01/L0${l}}
-        r2=${r1/_1.fq.gz/_2.fq.gz}
-        # add to merge
-        zcat ${r1} |gzip -9 >> ${readfolder}/${pfx}_1.fq.gz
-        zcat ${r2} |gzip -9 >> ${readfolder}/${pfx}_2.fq.gz
-    done
+# https://superuser.com/questions/1222086/gnu-parallel-global-variables-and-function
+# +++ export variables so that they remain accessible in the parallel calls (child processes)
+export readfolder
+export lanecnt
+
+# create custom function to handle one barcode group
+function MERGE_LANES {
+export ONE=$1
+pfx=$(basename ${ONE%_1.fq.gz})
+pfx=${pfx/_L01/_merged}
+#echo ${pfx}
+# empty if existing
+cat /dev/null > ${readfolder}/${pfx}_1.fq.gz
+cat /dev/null > ${readfolder}/${pfx}_2.fq.gz
+
+for l in $(seq 1 ${lanecnt}); do
+    r1=${ONE//L01/L0${l}}
+    r2=${r1/_1.fq.gz/_2.fq.gz}
+    # add to merge
+    zcat ${r1} |gzip -9 >> ${readfolder}/${pfx}_1.fq.gz
+    zcat ${r2} |gzip -9 >> ${readfolder}/${pfx}_2.fq.gz
+    #echo "${r1} added to ${readfolder}/${pfx}_1.fq.gz"
+    #echo "${r2} added to ${readfolder}/${pfx}_2.fq.gz"
 done
+}
+
+export -f MERGE_LANES
+
+# run 8+ jobs in parallel
+parallel --plus -j ${thr} MERGE_LANES ::: "${read1list[@]}"
+
+# initial linear programming
+# for fq in "${read1list[@]}"; do
+#     pfx=$(basename ${fq%_1.fq.gz})
+#     pfx=${pfx/_L01/_merged}
+#     # empty if existing
+#     cat /dev/null > ${readfolder}/${pfx}_1.fq.gz
+#     cat /dev/null > ${readfolder}/${pfx}_2.fq.gz
+#     
+#     for l in $(seq 1 ${lanecnt}); do
+#         r1=${fq//L01/L0${l}}
+#         r2=${r1/_1.fq.gz/_2.fq.gz}
+#         # add to merge
+#         zcat ${r1} |gzip -9 >> ${readfolder}/${pfx}_1.fq.gz
+#         zcat ${r2} |gzip -9 >> ${readfolder}/${pfx}_2.fq.gz
+#     done
+# done
 
 echo "# Merging done!" >&2
 echo "# please run MGI_mergeStats4.R to merge summary files and produce a barcode frequency plot" >&2

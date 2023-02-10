@@ -243,7 +243,7 @@ sub bar_hash{
 	my ($tmp_seq1,$tmp_seq2);
 	my @bases=('A','T','C','G','N');
 	if($errnum==0){
-		$hash->{$seq} =$name;
+		$hash->{$seq}=$name;
 		return $hash;
 	}else{
 		my $seq1 = substr($seq,0,length($seq)/2);	#barcode 1
