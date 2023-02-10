@@ -13,7 +13,8 @@
 # SplitDualBarcodes_NC.pl
 # gnu parallel
 #
-# Stephane Plaisance (VIB-NC) 2023/02/09; v1.0
+# Stéphane Plaisance - VIB-Nucleomics Core - 2023-02-09 v1.00
+# visit our Git: https://github.com/Nucleomics-VIB
 
 version="1.00, 2023_02_09"
 

@@ -7,9 +7,8 @@ use File::Basename;
 use Data::Dumper;
 use FileHandle;
 
-my $version="1.00, 2023_02_09";
-
-# SP@NC, 2023-02-09 
+# Stéphane Plaisance - VIB-Nucleomics Core - 2023-02-10 v1.00
+# visit our Git: https://github.com/Nucleomics-VIB
 #
 # this script runs a modified version of the original 'SplitDualBarcodes.pl'
 # (https://github.com/gateswell/SplitBarcode)
@@ -19,6 +18,8 @@ my $version="1.00, 2023_02_09";
 # + small edits:
 # -+ replace gzip post-compression through shell scripts by gzip in-pipe compression
 # + handle undef $correctedBar{$barhash{$barseq}} in case of errNum==0
+
+my $version="1.00, 2023_02_09";
 
 my $usage=<<USAGE;
 	Usage:

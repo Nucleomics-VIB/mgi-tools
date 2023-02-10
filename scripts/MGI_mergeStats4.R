@@ -1,18 +1,21 @@
 #!/usr/bin/env Rscript
 
 # script: MGI_mergeStats4.R
-# Stéphane Plaisance - VIB-Nucleomics Core - 2023-01-23 v1.01
+# Stéphane Plaisance - VIB-Nucleomics Core - 2023-02-10 v1.00
+# visit our Git: https://github.com/Nucleomics-VIB
 
 # merge multiple BarcodeStat.txt and TagStat.txt obtained after demultiplexing MGI data
 # save resulting merged tables to file
 # plot barcode frequency from the merged BarcodeStat
 
+suppressPackageStartupMessages(library("optparse"))
 #suppressPackageStartupMessages(library("readr"))
 suppressPackageStartupMessages(library("data.table"))
 suppressPackageStartupMessages(library("dplyr"))
 suppressPackageStartupMessages(library("reshape2"))
 suppressPackageStartupMessages(library("ggplot2"))
-suppressPackageStartupMessages(library("optparse"))
+
+version <- "v1.00, 2023-02-10"
 
 option_list <- list(
 	make_option(c("-i", "--input"), type="character", default=".",
@@ -22,7 +25,7 @@ option_list <- list(
 # PARSE OPTIONS
 opt <- parse_args(OptionParser(option_list=option_list))
 
-input.path <- ifelse(opt$input, opt$append, ".") 
+input.path <- ifelse(opt$input, opt$input, ".") 
 
 ##############################
 # merge BarcodeStat.txt files
