@@ -3,35 +3,61 @@
 # script: MGI_mergeStats4.R
 # Stéphane Plaisance - VIB-Nucleomics Core - 2023-01-23 v1.01
 
-suppressPackageStartupMessages(library("readr"))
-suppressPackageStartupMessages(library("data.table"))
-suppressPackageStartupMessages(library("plyr"))
-suppressPackageStartupMessages(library("ggplot2"))
+# merge multiple BarcodeStat.txt and TagStat.txt obtained after demultiplexing MGI data
+# save resulting merged tables to file
+# plot barcode frequency from the merged BarcodeStat
 
-vectorBarcodeStat <- list.files(path = ".", 
+#suppressPackageStartupMessages(library("readr"))
+suppressPackageStartupMessages(library("data.table"))
+suppressPackageStartupMessages(library("dplyr"))
+suppressPackageStartupMessages(library("ggplot2"))
+suppressPackageStartupMessages(library("optparse"))
+
+option_list <- list(
+	make_option(c("-i", "--input"), type="character", default=".",
+		help="input path"), 
+)
+
+# PARSE OPTIONS
+opt <- parse_args(OptionParser(option_list=option_list))
+
+input.path <- ifelse(opt$input, opt$append, ".") 
+
+##############################
+# merge BarcodeStat.txt files
+##############################
+
+vectorBarcodeStat <- list.files(path = input.path, 
                 pattern = "BarcodeStat.txt" ,
                 full.names = FALSE, 
                 recursive = TRUE,
                 ignore.case = FALSE,
                 include.dirs = TRUE)
 
-# merge all BarcodeStat.txt files to a single file
-BarcodeStatMerge <- rbindlist(lapply(vectorBarcodeStat, fread))
-# remove Total rows
+# merge all BarcodeStat.txt files to a single file using data.table fread
+BarcodeStatMerge <- data.table::rbindlist(lapply(vectorBarcodeStat, data.table::fread))
+# remove Total rows and zero percentages
 BarcodeStatMerge <- BarcodeStatMerge[!grepl("Total", BarcodeStatMerge$`#SpeciesNO`),]
-BarcodeStatMerge[,5] <- rep("0",nrow(BarcodeStatMerge))
+BarcodeStatMerge$Pct <- rep("0",nrow(BarcodeStatMerge))
 
-# summarize and sum
-BarcodeStat <- ddply(BarcodeStatMerge, ~ `#SpeciesNO`, numcolwise(sum))
+# summarize and sum using dplyr
+BarcodeStat <- BarcodeStatMerge %>% 
+  dplyr::group_by(`#SpeciesNO`) %>%
+  dplyr::summarise(across(c(Correct, Corrected, Total), sum))
 
 # add back Pct column
 BarcodeStat$Pct <- sprintf("%1.2f%%", 100*BarcodeStat$Total/sum(BarcodeStat$Total))
 
 # save to csv file
-write.csv(BarcodeStat, file = "BarcodeStat_merged.csv",row.names = FALSE)
+outfile <- paste0(input.path, "BarcodeStat_merged.csv", sep="/")
+write.csv(BarcodeStat, file = outfile, row.names = FALSE)
 
-# plot barcode bars
-pdf(file="BarcodeStat_density.pdf", width = 10, height = 10, bg = "white")
+##############################
+# plot barcode densities
+##############################
+
+outfile <- paste0(input.path, "BarcodeStat_density.pdf", sep="/")
+pdf(file=outfile, width = 10, height = 10, bg = "white")
 ggplot(data=BarcodeStat, aes(x=`#SpeciesNO`, y=Total)) +
   geom_bar(width=0.7, stat="identity") +
   scale_y_continuous(expand = c(0,0)) +
@@ -42,8 +68,11 @@ ggplot(data=BarcodeStat, aes(x=`#SpeciesNO`, y=Total)) +
   ylab("read (pair) count")
 null <- dev.off()
 
-##############
-vectorTagStat <- list.files(path = ".",
+##############################
+# merge TagStat.txt files
+##############################
+
+vectorTagStat <- list.files(path = input.path,
                             pattern = "TagStat.txt" ,
                             full.names = FALSE, 
                             recursive = TRUE,
@@ -51,19 +80,26 @@ vectorTagStat <- list.files(path = ".",
                             include.dirs = TRUE)
 
 # merge all TagStat.txt files to a single file
-TagStatMerge <- rbindlist(lapply(vectorTagStat, fread))
-TagStatMerge[,4] <- rep("0",nrow(TagStatMerge))
+TagStatMerge <- data.table::rbindlist(lapply(vectorTagStat, data.table::fread))
+TagStatMerge$Pct <- rep("0",nrow(TagStatMerge))
 
-# summarize and sum
-TagStat <- ddply(TagStatMerge, .(`#Sequence`,SpeciesNO), numcolwise(sum))
+# summarize and sum using dplyr
+TagStat <- TagStatMerge %>% 
+  dplyr::group_by(`#Sequence`,SpeciesNO) %>%
+  dplyr::summarise(across(c(readCount), sum)) %>%
+  arrange(desc(readCount))
 
-# add back Pct column
 TagStat$Pct <- sprintf("%1.2f%%", 100*TagStat$readCount/sum(TagStat$readCount))
 
-# reorder descending
-TagStat <- TagStat[order(-TagStat$readCount),]
+# save to csv files
+outfile <- paste0(input.path, "TagStat_merged.csv", sep="/")
+write.csv(TagStat, file = outfile, row.names = FALSE)
 
-# save to csv file
-write.csv(TagStat, file = "TagStat_merged.csv",row.names = FALSE)
-
-
+# top 100 unknown barcodes
+topUnknown <- TagStat %>%
+  filter(SpeciesNO == "unknown") %>%
+  arrange(desc(readCount)) %>%
+  head(100)
+  
+outfile <- paste0(input.path, "TagStat_top100_unknown.csv", sep="/")
+write.csv(topUnknown, file = outfile, row.names = FALSE)

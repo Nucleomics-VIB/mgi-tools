@@ -43,6 +43,9 @@ while getopts "b:f:i:o:e:c:rc:h" opt; do
   esac
 done
 
+# disable buffering to get output during long process (loop)
+#$|=1;
+
 # test input are provided and present
 # check if required arguments were provided
 if [ -z "${optb+x}" ] || [ -z "${optf+x}" ]; then
@@ -66,6 +69,8 @@ if [ -z "${optf+x}" ] || ! [[ ${optf} =~ $re ]];
    exit 1 
 fi
 
+echo "# start $(date)" >&2
+
 # folders
 infolder=${opti:-"."}
 outfolder=${opto:-"."}
@@ -80,6 +85,8 @@ if [ -z "${listlen}" ] || [ "${listlen}" -gt 4 ]; then
   echo "# make sure the input folder contains only 1 up to 4 Lanes of a single run (not demultiplexed)"
   exit 1
 fi
+
+echo "# Demultiplexing ${listlen} Lanes in parallel" >&2
 
 # set other parameters for SplitDualBarcodes_NC.pl
 b=${optb}
@@ -100,11 +107,13 @@ parallel --plus -j 4 SplitDualBarcodes_NC.pl \
   -f ${f} \
   -c ${c} \
   -rc ${rc} \
-  -o {= s:.*/::,  s:_read_1.fq.gz:: =}_e${e}_f${f}_demux ::: $(cat /tmp/R1.list)
+  -o ${outfolder}/{= s:.*/::,  s:_read_1.fq.gz:: =}_e${e}_f${f}_demux ::: $(cat /tmp/R1.list)
   
 ######################################
 # merge fastq from 4 lanes by barcode 
 ######################################
+
+echo "# Merging read1 and read2 files from ${listlen} Lanes by barcode" >&2
 
 # create Lane folder array from R1.list
 # each line is stored in ${a[0]} .. ${a[3]}
@@ -113,28 +122,30 @@ readarray -t a < /tmp/R1.list
 lanecnt=$(wc -l < /tmp/R1.list)
 
 # loop through all files in L01 (same samples should also exist in the other 3 Lanes)
-l1folder=$(basename ${a[0]%_read_1.fq.gz})_e${e}_f${f}_demux
+l1folder=${outfolder}/$(basename ${a[0]%_read_1.fq.gz})_e${e}_f${f}_demux
 readarray -t read1list < <(find "${l1folder}" -name "*_1.fq.gz")
 
 # concatenate same barcode in all Lanes to a single file (both for r1 and r2)
-outfolder="${outfolder}/merged_reads_e${e}_f${f}"
-mkdir -p ${outfolder}
+readfolder="${outfolder}/merged_reads_e${e}_f${f}"
+mkdir -p ${readfolder}
 
 for fq in "${read1list[@]}"; do
     pfx=$(basename ${fq%_1.fq.gz})
     pfx=${pfx/_L01/_merged}
     # empty if existing
-    cat /dev/null > ${outfolder}/${pfx}_1.fq.gz
-    cat /dev/null > ${outfolder}/${pfx}_2.fq.gz
+    cat /dev/null > ${readfolder}/${pfx}_1.fq.gz
+    cat /dev/null > ${readfolder}/${pfx}_2.fq.gz
     
     for l in $(seq 1 ${lanecnt}); do
         r1=${fq//L01/L0${l}}
         r2=${r1/_1.fq.gz/_2.fq.gz}
         # add to merge
-        zcat ${r1} >> ${outfolder}/${pfx}_1.fq.gz
-        zcat ${r2} >> ${outfolder}/${pfx}_2.fq.gz
+        zcat ${r1} >> ${readfolder}/${pfx}_1.fq.gz
+        zcat ${r2} >> ${readfolder}/${pfx}_2.fq.gz
     done
 done
 
-# switch to R for the merging of the summary files and plotting
-# see MGI_mergeStats4.R
+echo "# Merging done!" >&2
+echo "# please run MGI_mergeStats4.R to merge summary files and produce a barcode frequency plot" >&2
+echo
+echo "# end $(date), using version ${version}" >&2
