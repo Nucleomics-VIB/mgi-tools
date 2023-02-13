@@ -65,7 +65,8 @@ The first part of the run will demultiplex each of the four Lanes of data to a f
 When this is done, a second part of the script will merge the barcodes pairs into a single read pair for each barcode from the provided list (and a pair of unbarcoded reads). This process is running in parallel to save time, adapt the thread number to fit your server.
 
 * When the run has completed, run the R script which will take care of:
-** merging the stat files from the 1-4 Lanes into single stat files, and plotting the barcode frequencies from the first stat file (BarcodeStat.txt). The stats will be saved to csv files for downstream use.
+
+  * merging the stat files from the 1-4 Lanes into single stat files, and plotting the barcode frequencies from the first stat file (BarcodeStat.txt). The stats will be saved to csv files for downstream use.
 
 REM: please report any misbehaviour so that I can improve this code.
 
