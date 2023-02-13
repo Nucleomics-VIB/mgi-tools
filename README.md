@@ -25,7 +25,7 @@ This work is licensed under a [Creative Commons Attribution-ShareAlike 3.0 Unpor
 ### Install the following executables on your machine (and add them to your PATH)
 
 * SplitBarcode_NC.pl (not yet thoroughly tested!)
-* SplitBarcodes_all_NC.sh
+* SplitBarcodes_all_NC.sh (not yet produced, wil be added later)
 
 * SplitDualBarcodes_NC.pl 
 * SplitDualBarcodes_all_NC.sh
