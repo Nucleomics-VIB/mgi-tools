@@ -34,7 +34,7 @@ This work is licensed under a [Creative Commons Attribution-ShareAlike 3.0 Unpor
 
 ### Move to the folder where the Lanes of undemultiplexed data have been saved
 
-Note: You should have 1-4 Lanes in that folder and should not have another run or processed folders resulting from a former run
+**Note:** You should have 1-4 Lanes in that folder and should not have another run or processed folders resulting from a former run
 
 * Prepare a barcode_list.txt file with 2-columns (name,barcode) or three columns (name, barcode1, barcode2) depending on the library type
 * Identify the position where the barcode is expected in read#2 (used with parameter -f)
@@ -62,7 +62,7 @@ SplitDualBarcodes_all_NC.sh -b bc.list -f 91 -o /opt/biotools/tmp -t 48 -e 2
 
 The first part of the run will demultiplex each of the four Lanes of data to a folder of barcode read pairs (using a parallel process for each Lane) and two Lane summary stat files. 
 
-**Note: _Each parallel process is using several threads for archiving/deachiving, and for processing the data._
+**Note:** _Each parallel process is using several threads for archiving/deachiving, and for processing the data._
 
 When this is done, a second part of the script will merge the barcodes pairs into a single read pair for each barcode from the provided list (and a pair of unbarcoded reads). This process is running in parallel to save time, adapt the thread number to fit your server.
 
