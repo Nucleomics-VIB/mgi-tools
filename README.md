@@ -24,13 +24,13 @@ This work is licensed under a [Creative Commons Attribution-ShareAlike 3.0 Unpor
 
 ### Install the following executables on your machine (and add them to your PATH)
 
-* SplitBarcode_NC.pl (not yet thoroughly tested!)
+* _SplitBarcode_NC.pl (not yet thoroughly tested!)_
 * _SplitBarcodes_all_NC.sh (not yet produced, wil be added later)_
 
-* SplitDualBarcodes_NC.pl 
-* SplitDualBarcodes_all_NC.sh
+* **SplitDualBarcodes_NC.pl** 
+* **SplitDualBarcodes_all_NC.sh**
 
-* MGI_mergeStats4.R (depends on several R packages, please check its header)
+* **MGI_mergeStats4.R** (depends on several R packages, please check its header)
 
 ### Move to the folder where the Lanes of undemultiplexed data have been saved
 
