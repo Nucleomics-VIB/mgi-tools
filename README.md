@@ -60,13 +60,13 @@ SplitDualBarcodes_all_NC.sh -h
 SplitDualBarcodes_all_NC.sh -b bc.list -f 91 -o /opt/biotools/tmp -t 48 -e 2
 ```
 
-The first part of the run will demultiplex the four Lanes of data to barcode read pairs (using 4 parallel proc esses, each using several threads for archiving/deachiving, and for processing).
+The first part of the run will demultiplex each of the four Lanes of data to a folder of barcode read pairs (using a parallel process for each Lane). Note that each parallel process is using several threads for archiving/deachiving, and for processing the data.
 
 When this is done, a second part of the script will merge the barcodes pairs into a single read pair for each barcode from the provided list (and a pair of unbarcoded reads). This process is running in parallel to save time, adapt the thread number to fit your server.
 
 * When the run has completed, run the R script which will take care of:
 
-** merge the stat files from the f1-4 Lanes into single stat files, and plot the barcode frequencies from the first stat file (BarcodeStat.txt). The stats will be saved to csv files for docnstream use.
+** merge the stat files from the 1-4 Lanes into single stat files, and plot the barcode frequencies from the first stat file (BarcodeStat.txt). The stats will be saved to csv files for docnstream use.
 
 REM: please report any misbehaviour so that I can improve this code.
 
