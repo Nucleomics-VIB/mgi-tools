@@ -22,7 +22,7 @@ This work is licensed under a [Creative Commons Attribution-ShareAlike 3.0 Unpor
 
 ## Usage example
 
-### Install the following executables on your machine
+### Install the following executables on your machine (and add them to your PATH)
 
 * SplitBarcode_NC.pl (not yet thoroughly tested!)
 * SplitBarcodes_all_NC.sh
