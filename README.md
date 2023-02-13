@@ -75,7 +75,7 @@ MGI_mergeStats4.R
 It will take care of:
 
   * merging the stat files from the 1-4 Lanes into single stat files. The stats will be saved to csv files for downstream use.
-  * plotting the barcode frequencies from the first merged stat file (BarcodeStat.txt). 
+  * plotting the barcode frequencies from the first merged stat file (BarcodeStat.txt) to a PDF file. 
 
 REM: please report any misbehaviour so that I can improve this code.
 
