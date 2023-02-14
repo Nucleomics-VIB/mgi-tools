@@ -115,7 +115,7 @@ open my $SS,">$outdir/SequenceStat.txt" or die $!;
 #print $SS "#Sequence\tSpeciesNO\treadCount\tPct\n";
 
 # changed header names to match current on-device output
-print $BS "#barcode\tCorrect\tCorrected\tTotal\tPercentage(%)\n";
+print $BS "#Barcode\tCorrect\tCorrected\tTotal\tPercentage(%)\n";
 print $SS "#Sequence\tBarcode\tCount\tPercentage(%)\n";
 
 # loop through all barcode pairs from provided list
