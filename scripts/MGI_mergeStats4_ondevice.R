@@ -30,15 +30,15 @@ vectorBarcodeStat <- list.files(path = '.',
 BarcodeStatMerge <- data.table::rbindlist(lapply(vectorBarcodeStat, data.table::fread))
 # remove Total rows and zero percentages
 BarcodeStatMerge <- BarcodeStatMerge[!grepl("Total", BarcodeStatMerge$`#Barcode`),]
-BarcodeStatMerge$Pct <- rep("0",nrow(BarcodeStatMerge))
+BarcodeStatMerge$`Percentage(%)` <- rep("0",nrow(BarcodeStatMerge))
 
 # summarize and sum using dplyr
 BarcodeStat <- BarcodeStatMerge %>% 
   dplyr::group_by(`#Barcode`) %>%
   dplyr::summarise(across(c(Correct, Corrected, Total), sum))
 
-# add back Pct column
-BarcodeStat$Pct <- sprintf("%1.2f%%", 100*BarcodeStat$Total/sum(BarcodeStat$Total))
+# add back Percentage(%) column
+BarcodeStat$`Percentage(%)` <- sprintf("%1.2f%%", 100*BarcodeStat$Total/sum(BarcodeStat$Total))
 
 # save to csv file
 outfile <- "BarcodeStat_merged.csv"
@@ -83,7 +83,7 @@ vectorSequenceStat <- list.files(path = '.',
 
 # merge all SequenceStat.txt files to a single file
 SequenceStatMerge <- data.table::rbindlist(lapply(vectorSequenceStat, data.table::fread))
-SequenceStatMerge$Pct <- rep("0",nrow(SequenceStatMerge))
+SequenceStatMerge$`Percentage(%)` <- rep("0",nrow(SequenceStatMerge))
 
 # summarize and sum using dplyr
 SequenceStat <- SequenceStatMerge %>% 
@@ -91,8 +91,8 @@ SequenceStat <- SequenceStatMerge %>%
   dplyr::summarise(across(c(Count), sum), .groups = "drop") %>%
   arrange(desc(Count))
 
-# add back Pct column
-SequenceStat$Pct <- sprintf("%1.2f%%", 100*SequenceStat$Count/sum(SequenceStat$Count))
+# add back Percentage(%) column
+SequenceStat$`Percentage(%)` <- sprintf("%1.2f%%", 100*SequenceStat$Count/sum(SequenceStat$Count))
 
 # save to csv files
 outfile <- "SequenceStat_merged.csv"
@@ -100,7 +100,7 @@ write.csv(SequenceStat, file = outfile, row.names = FALSE)
 
 # top 100 unknown barcodes
 topUnknown <- SequenceStat %>%
-  filter(Barcode == "unknown") %>%
+  filter(Barcode == "undecoded") %>%
   arrange(desc(Count)) %>%
   head(100)
   
