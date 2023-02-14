@@ -18,8 +18,8 @@ use FileHandle;
 # + small edits:
 # -+ replace gzip post-compression through shell scripts by gzip in-pipe compression
 # + handle undef $correctedBar{$barhash{$barseq}} in case of errNum==0
-
-my $version="1.00, 2023_02_09";
+# -+ changed header names to match current on-device output
+my $version="1.01, 2023_02_14";
 
 my $usage=<<USAGE;
 	Usage:
@@ -108,8 +108,11 @@ open my $BS,">$outdir/BarcodeStat.txt" or die $!;
 open my $SS,">$outdir/TagStat.txt" or die $!;
 
 # add header to summary files
-print $BS "#SpeciesNO\tCorrect\tCorrected\tTotal\tPct\n";
-print $SS "#Sequence\tSpeciesNO\treadCount\tPct\n";
+#print $BS "#SpeciesNO\tCorrect\tCorrected\tTotal\tPct\n";
+#print $SS "#Sequence\tSpeciesNO\treadCount\tPct\n";
+# changed header names to match current on-device output
+print $BS "#barcode\tCorrect\tCorrected\tTotal\tPercentage(%)\n";
+print $SS "#Sequence\tBarcode\tCount\tPercentage(%)\n";
 
 # loop through all barcode pairs from provided list
 while(<$fh>){	#1	ATGCATCTAA	TATAGCCTAG

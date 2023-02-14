@@ -98,11 +98,11 @@ SequenceStat$`Percentage(%)` <- sprintf("%1.2f%%", 100*SequenceStat$Count/sum(Se
 outfile <- "SequenceStat_merged.csv"
 write.csv(SequenceStat, file = outfile, row.names = FALSE)
 
-# top 100 unknown barcodes
-topUnknown <- SequenceStat %>%
+# top 100 undecoded barcodes
+topUndecoded <- SequenceStat %>%
   filter(Barcode == "undecoded") %>%
   arrange(desc(Count)) %>%
   head(100)
   
-outfile <- "SequenceStat_top100_unknown.csv"
-write.csv(topUnknown, file = outfile, row.names = FALSE)
+outfile <- "SequenceStat_top100_undecoded.csv"
+write.csv(topUndecoded, file = outfile, row.names = FALSE)
