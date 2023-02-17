@@ -1,0 +1,11 @@
+# Demultiplexing 4 Lanes in parallel
+# !! each job uses several threads and file handles !!
+creating /opt/biotools/tmp/V350134580_L02_e1_f91_demux folder
+creating /opt/biotools/tmp/V350134580_L03_e1_f91_demux folder
+creating /opt/biotools/tmp/V350134580_L04_e1_f91_demux folder
+creating /opt/biotools/tmp/V350134580_L01_e1_f91_demux folder
+# Merging read1 and read2 files from 4 Lanes by barcode
+# Merging done!
+# please run MGI_mergeStats4.R to merge summary files and produce a barcode frequency plot
+
+# end Thu 16 Feb 2023 05:57:37 PM CET, using version 1.00, 2023_02_09
