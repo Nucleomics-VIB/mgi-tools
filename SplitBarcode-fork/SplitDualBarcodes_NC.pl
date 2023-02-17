@@ -22,7 +22,8 @@ use Text::Levenshtein::Flexible qw( levenshtein levenshtein_l_all );
 # + small edits:
 # -+ replace gzip post-compression through shell scripts by gzip in-pipe compression
 # -+ changed headers and file names to match current on-device output
-# Text::Levenshtein to correct barcodes
+# Text::Levenshtein::Flexible to try correct barcodes (v1.03)
+# speed up search for barcode#2 within results of barcode#1 (v1.04)
 
 my $version="1.04, 2023_02_16";
 
@@ -51,10 +52,10 @@ my $usage=<<USAGE;
 	VIB-NC version $version
 USAGE
 
-#=============global variants=============
+#=============global variables============
 my ($read1,$read2,$errNum,$fc,$bl,$compress,$outdir,$rc,$help);
-my (%bchash,$prefix,$ambo1,$ambo2);
 #=========================================
+
 GetOptions(
 	"read1|r1=s"=>\$read1,
 	"read2|r2=s"=>\$read2,
@@ -86,15 +87,19 @@ if(!$read1 || !$read2 || !$fc || !$bl || $help ){
 }
 
 #========global variables==========
-my (%barhash,%oh,%oribar,%oriname,%correctBar,%correctedBar,%unknownBar,$totalReadsNum);
-my (%tagNum,$am1,$am2,@fq,$barcode_len,$barcode_len1,$barcode_len2,%ori_tag,%mis_barNum);
+my (%oh,%oribar,%oriname,%correctBar,%correctedBar,%unknownBar,$totalReadsNum);
+my (%tagNum,$am1,$am2,@fq,$barcode_len,$barcode_len1,$barcode_len2,%ori_tag);
+my $prefix;
 #=========================
 
 my $name=basename($read2);
+
 # the following regexp is matching expected MGI folder naming
 # eg V300009631_128A_L01_read_2.fq.gz => V300009631_128A_L01
 # prefix is all text before _L0X_read_2 in read2 name
+
 $prefix=$1 if $name=~/(.*)\_(\w+)_2\.fq(.gz)?/;
+
 unless(-d $outdir){
 	print STDERR "creating $outdir folder\n";
 	`mkdir -p $outdir`;
@@ -118,9 +123,9 @@ if(uc($compress) eq 'Y'){
 push @fq,"$outdir/$prefix\_undecoded_1.fq";
 push @fq,"$outdir/$prefix\_undecoded_2.fq";
 
-########################################
-# load barcode file and store in arrays
-########################################
+########################################################
+# load barcode file and store info in hashes and arrays
+########################################################
 
 # barcode file handle
 open my $fh,$bl or die "$bl barcode list not found !\n$!";
@@ -129,14 +134,21 @@ open my $fh,$bl or die "$bl barcode list not found !\n$!";
 my (@name,@correct,@bc1,@bc2);
 
 # loop through all barcode pairs from provided list
+# create merged barcode
+# add data to hashes and arrays
+# create filehandles for output
+
 while(<$fh>){	#1	ATGCATCTAA	TATAGCCTAG
+	
+	# ignore comment lines
 	next if /^#/;
 	chomp;
 	my @tmp=split /\s+/,$_;
 	my $barcode_seq;
+	
     # if option rc was set to 'Y'
 	if(uc($rc) eq 'Y'){
-        # reverse the barcodes
+        # swap and reverse the barcodes
 		my $t=reverse(uc($tmp[1]));		#AATCTACGTA
 		$tmp[1]=reverse(uc($tmp[2]));	#GATCCGATAT
 		$tmp[2]=$t;
@@ -163,7 +175,7 @@ while(<$fh>){	#1	ATGCATCTAA	TATAGCCTAG
 	# add merged to correct barcodes
 	push(@correct,$barcode_seq);
 
-	# add merged barcode to hash of original barcodes
+	# add merged barcode to hash (list) of original barcodes
 	$oribar{$barcode_seq} = 1;
 	
 	# create demultiplexed fastq output file handles for both reads
@@ -174,6 +186,7 @@ while(<$fh>){	#1	ATGCATCTAA	TATAGCCTAG
         open $oh{$tmp[0]}[0],">$outdir/$prefix\_$tmp[0]\_1.fq" or die $!;
 	    open $oh{$tmp[0]}[1],">$outdir/$prefix\_$tmp[0]\_2.fq" or die $!;
     }
+    
     # add both demultiplexed read filenames to fastq-name array @fq
 	push @fq,"$outdir/$prefix\_$tmp[0]\_1.fq";
 	push @fq,"$outdir/$prefix\_$tmp[0]\_2.fq";
@@ -219,12 +232,13 @@ while(<$rd1>){
 
 	# count read pair
 	$totalReadsNum ++;
+	
+	# debug stop after 100k read pairs
 	#$totalReadsNum =~ m/00000$/ and print STDERR "$totalReadsNum\n";
     #$totalReadsNum =~ m/00000$/ and last;
 	
 	# extract double-barcode sequence from read2 at expected starting position $fc (-f)
 	my $barseq=substr($seq2,$fc-1,$barcode_len+1);
-	#print STDOUT "# $barseq\n";
 	
 	# add 1 to this barcode counter for SequenceStat.txt
 	# note: can present missmatches with the expected barcode
@@ -245,12 +259,11 @@ while(<$rd1>){
 	if(exists $oribar{$barseq}){
 		# add 1 to counter
     	$correctBar{$barseq} += 1;
-   	
-    	#print STDOUT "# $barseq is found in list with name $oriname{$barseq}\n";
        	
    		# write reads to files
     	$oh{$oriname{$barseq}}[0]->print("$head1\n$seq1\n$plus1\n$qual1\n");
 		$oh{$oriname{$barseq}}[1]->print("$head2\n$clipseq2\n$plus2\n$clipqual2\n");
+
 		# process next read pair
 		next;
 		}
@@ -263,12 +276,10 @@ while(<$rd1>){
 	my $test1 = substr($seq2,$fc-1,$barcode_len1+1);
 	my $test2 = substr($seq2,$fc+$barcode_len1-1,$barcode_len2+1);
 	
-   	my $cor = tryCorrect2($test1,$test2);
+   	my $cor = tryCorrectLevenshtein($test1,$test2);
    	if ($cor ne "na"){
 		# add 1 to counter
    		$correctedBar{$cor} += 1;
-
-   		#print STDOUT "# $name[$cor] $bc1[$cor] $bc2[$cor]\n";
 
 		# write reads to files
     	$oh{$oriname{$cor}}[0]->print("$head1\n$seq1\n$plus1\n$qual1\n");
@@ -277,8 +288,6 @@ while(<$rd1>){
 		# add 1 to counter
 		$unknownBar{$barseq} += 1;
 
-    	#print STDOUT "# barcode is unexpected, store read pair as undecoded\n";
-    	
 		# write reads to files
 		print $am1 "$head1\n$seq1\n$plus1\n$qual1\n";
 		print $am2 "$head2\n$clipseq2\n$plus2\n$clipqual2\n";
@@ -298,14 +307,16 @@ print $BS "#Barcode\tCorrect\tCorrected\tTotal\tPercentage(%)\n";
 
 my($totalcorrect,$totalcorrected,$totalbarreads,$totalpct);
 for my $seq(sort {$oriname{$a} cmp $oriname{$b}} keys %oribar){
-	# unlikely but when $correctBar{$barhash{$seq}} is unset => set it to 0
+	# unlikely but when $correctBar{$seq} is unset => set it to 0
     if (!$correctBar{$seq}) {
         $correctBar{$seq}=0;
     }
-    # when $correctedBar{$barhash{$seq}} is unset => set it to 0
+
+    # when $correctedBar{$seq} is unset => set it to 0
     if (!$correctedBar{$seq}) {
         $correctedBar{$seq}=0;
     }
+
     my $BartotalReads = $correctBar{$seq}+$correctedBar{$seq};
 	my $pct = ($BartotalReads/$totalReadsNum)*100;
 	$totalcorrect += $correctBar{$seq};
@@ -344,7 +355,7 @@ return @matches;
 }
 
 #================================
-sub tryCorrect2 {
+sub tryCorrectLevenshtein {
   my ($test1, $test2) = @_;
   my (@res1,@res2,$merge,$match);
   
@@ -361,6 +372,11 @@ sub tryCorrect2 {
     @res2=( map { $_->[0] }
     sort { $a->[1] <=> $b->[1] }
     levenshtein_l_all($errNum, $test2, @bc2[@idx1]) );
+
+    # test if more than one solution (errNum is too high!)
+    if ( scalar @res2 > 1 ){
+      die "I found ".(scalar @res2)." corrections, errNum is likely too high, stopping here!\n";
+    }
 
     # barcode#2 matches or could be corrected
     if ( @res2 ){
