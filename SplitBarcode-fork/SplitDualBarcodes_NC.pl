@@ -9,7 +9,7 @@ use FileHandle;
 # add edit distance function
 use Text::Levenshtein::Flexible qw( levenshtein levenshtein_l_all );
 
-# script: SplitDualBarcodes_NC2.pl
+# script: SplitDualBarcodes_NC.pl
 # rewritten with edit distance for correction
 # Stéphane Plaisance - VIB-Nucleomics Core - 2023-02-14 v1.04
 # visit our Git: https://github.com/Nucleomics-VIB
