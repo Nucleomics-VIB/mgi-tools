@@ -149,7 +149,7 @@ edmerged$dist <- mapply(func, edmerged$dual_bc, edmerged$dual_bc_)
 
 # find minimum >0
 min.dual <- min(edmerged$dist[edmerged$dist> 0])
-plot.title.dual <- paste0("Mismatch number between any two barcode-1 sequences (min:", min.dual, ")", sep="")
+plot.title.dual <- paste0("Mismatch number between any two merged barcodes (min:", min.dual, ")", sep="")
 
 p4 <- ggplot(data = edmerged, aes(dual_bc, dual_bc_, fill = dist)) +
   geom_tile(color = "white") +
