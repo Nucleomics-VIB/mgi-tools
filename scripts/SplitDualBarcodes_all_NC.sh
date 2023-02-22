@@ -78,10 +78,14 @@ echo "# start $(date)" >&2
 infolder=${opti:-"."}
 outfolder=${opto:-"."}
 
+if [ ! -d "${outfolder}" ]; then
+	echo "# creating ${outfolder} folder";
+	mkdir -p ${outfolder}
+fi
+
 # save all output to log files
 log=${outfolder}/runlog_$(date +%s).txt
 exec &> >(tee -i ${log})
-
 
 # build a list of all read1 files in path
 find ${infolder} -name "*_L0?_read_1.fq.gz" | sort > /tmp/R1.list

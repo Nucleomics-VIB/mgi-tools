@@ -6,8 +6,10 @@ use Cwd 'abs_path';
 use File::Basename;
 use Data::Dumper;
 use FileHandle;
-# add edit distance function
-use Text::Levenshtein::Flexible qw( levenshtein levenshtein_l_all );
+# add edit distance function (change to use lc instead of l)
+# use Text::Levenshtein::Flexible qw( levenshtein levenshtein_l_all );
+use Text::Levenshtein::Flexible qw( levenshtein levenshtein_lc_all );
+use List::MoreUtils qw(uniq);
 
 # script: SplitDualBarcodes_NC.pl
 # rewritten with edit distance for correction
@@ -24,8 +26,10 @@ use Text::Levenshtein::Flexible qw( levenshtein levenshtein_l_all );
 # -+ changed headers and file names to match current on-device output
 # Text::Levenshtein::Flexible to try correct barcodes (v1.03)
 # speed up search for barcode#2 within results of barcode#1 (v1.04)
+# failed: add different costs for ins del and sub to get indels out of the way (v1.05)
+# return to using levenshtein levenshtein_l_all
 
-my $version="1.04, 2023_02_16";
+my $version="1.05, 2023_02_21";
 
 my $usage=<<USAGE;
 	Usage:
@@ -90,6 +94,8 @@ if(!$read1 || !$read2 || !$fc || !$bl || $help ){
 my (%oh,%oribar,%oriname,%correctBar,%correctedBar,%unknownBar,$totalReadsNum);
 my (%tagNum,$am1,$am2,@fq,$barcode_len,$barcode_len1,$barcode_len2,%ori_tag);
 my $prefix;
+# specify costs for the correction tolerance to get indels out of the way
+my ($cost_ins, $cost_del, $cost_sub) = (10, 10, 1);
 #=========================
 
 my $name=basename($read2);
@@ -103,7 +109,8 @@ $prefix=$1 if $name=~/(.*)\_(\w+)_2\.fq(.gz)?/;
 unless(-d $outdir){
 	print STDERR "creating $outdir folder\n";
 	`mkdir -p $outdir`;
-}
+	};
+
 $outdir=abs_path($outdir);
 chomp($outdir);
 
@@ -273,9 +280,9 @@ while(<$rd1>){
 	#########################################################
 	
 	# extract both barcodes for correction testing
-	my $test1 = substr($seq2,$fc-1,$barcode_len1+1);
-	my $test2 = substr($seq2,$fc+$barcode_len1-1,$barcode_len2+1);
-	
+	my $test1 = substr($seq2,$fc-1,$barcode_len1);
+	my $test2 = substr($seq2,$fc+$barcode_len1-1,$barcode_len2);
+
    	my $cor = tryCorrectLevenshtein($test1,$test2);
    	if ($cor ne "na"){
 		# add 1 to counter
@@ -356,32 +363,42 @@ return @matches;
 
 #================================
 sub tryCorrectLevenshtein {
+
+  # levenshtein_lc_all($max_distance, $cost_ins, $cost_del, $cost_sub, $src, @dst)
+
   my ($test1, $test2) = @_;
-  my (@res1,@res2,$merge,$match);
+  my (@res1,@res2,@idx1,@idx2,$merge,$match);
   
   @res1=( map { $_->[0] }
   sort { $a->[1] <=> $b->[1] }
-  levenshtein_l_all($errNum, $test1, @bc1) );
-     
+  levenshtein_lc_all($errNum, $cost_ins, $cost_del, $cost_sub, $test1, @bc1) );
+  
+  # levenshtein_l_all($errNum, $test1, @bc1) );
+
   # barcode#1 matches or could be corrected
   if ( @res1 ){
-    # identify the indices of the first barcode match(es)
-    my @idx1 = map {search_idx( $_, @bc1 )} @res1;
+    # identify the unique indices matched by the first barcode 
+    @idx1 = map {search_idx( $_, @bc1 )} uniq( @res1 );
     
     # only look at the paired barcode#2 in second list
     @res2=( map { $_->[0] }
     sort { $a->[1] <=> $b->[1] }
-    levenshtein_l_all($errNum, $test2, @bc2[@idx1]) );
+    levenshtein_lc_all($errNum, $cost_ins, $cost_del, $cost_sub, $test2, @bc2[@idx1]) );
 
-    # test if more than one solution (errNum is too high!)
-    if ( scalar @res2 > 1 ){
-      die "I found ".(scalar @res2)." corrections, errNum is likely too high, stopping here!\n";
+    # levenshtein_l_all($errNum, $test2, @bc2[@idx1]) );
+
+    # identify the unique indices matched by the second barcode
+    @idx2 = map {search_idx( $_, @bc2 )} uniq( @res2 );
+        
+    # test if more than one solution and die (errNum is too high!)
+    if ( scalar @idx2 > 1 ){
+      die "I found ".(scalar @idx2)." corrections, errNum is likely too high, stopping here!\n";
     }
 
     # barcode#2 matches or could be corrected
     if ( @res2 ){
       # corrected pair exists (not barcode hopping)
-      $merge="@res1"."@res2";
+      $merge="@bc1[@idx2]"."@bc2[@idx2]";
       if ( $oribar{$merge} ){
         return $merge;
       }else{
