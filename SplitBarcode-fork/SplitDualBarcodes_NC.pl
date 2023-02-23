@@ -29,6 +29,9 @@ use List::MoreUtils qw(uniq);
 # failed: add different costs for ins del and sub to get indels out of the way (v1.05)
 # return to using levenshtein levenshtein_l_all
 
+# disable buffering to get output during long process (loop)
+$|=1;
+
 my $version="1.05, 2023_02_21";
 
 my $usage=<<USAGE;

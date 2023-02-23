@@ -47,7 +47,7 @@ while getopts "b:f:i:o:e:c:rc:t:h" opt; do
 done
 
 # disable buffering to get output during long process (loop)
-#$|=1;
+$|=1;
 
 # test input are provided and present
 # check if required arguments were provided

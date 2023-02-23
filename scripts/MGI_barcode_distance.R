@@ -11,6 +11,9 @@ suppressPackageStartupMessages(library("optparse"))
 suppressPackageStartupMessages(library("stringdist"))
 suppressPackageStartupMessages(library("tidyr"))
 suppressPackageStartupMessages(library("ggplot2"))
+suppressPackageStartupMessages(library("gridExtra"))
+suppressPackageStartupMessages(library("scales"))
+suppressPackageStartupMessages(library("cowplot"))
 
 version <- "v1.00, 2023-02-17"
 
@@ -32,16 +35,16 @@ return(z)
 }
 
 # load log data in
-data <- read.delim(opt$list, sep = " ",
+data <- read.delim(opt$list, sep = "",
                    header=FALSE,
                    comment.char = "#",
                    stringsAsFactors=FALSE)
 
- # data <- read.delim("/data/analyses/MGI_demux/bc.list", 
- #                    sep=" ",
- #                    header=FALSE, 
- #                    comment.char = "#", 
- #                    stringsAsFactors=FALSE)
+# data <- read.delim("/data/analyses/MGI_demux/new.barcode.list",
+#                     sep="\t",
+#                     header=FALSE,
+#                     comment.char = "#",
+#                     stringsAsFactors=FALSE)
 
 #######################
 # barcode1 with itself
@@ -69,9 +72,30 @@ p1 <- ggplot(data = ed1, aes(bc1, bc1_, fill = dist)) +
         axis.text.y = element_text(color = "grey20", size = 3, angle = 0, hjust = 1, vjust = 0, face = "plain")) +
   coord_fixed() +
   scale_color_continuous(trans = 'reverse') +
-  ggtitle(plot.title.d1)
+  ggtitle(plot.title.d1) +
+  theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
 
-suppressMessages(ggsave(plot=p1, filename="bc1xself_distance.pdf"))
+# get max count to add some space above plot2 and show the top count
+max.cnt1 <- max(hist(ed1$dist, breaks=10, plot=FALSE)$counts)
+
+p1.hist <- ggplot(data = ed1, aes(x=dist, fill=factor(ifelse(dist>0,"different","self"),levels = c("self", "different")))) +
+  geom_bar(stat="count") +
+  scale_fill_manual(name = "type", values=c("red","grey50")) +
+  scale_x_continuous(breaks= pretty_breaks()) +
+  theme_minimal() +
+  xlab('mutual edit distance') +
+  ylab('barcode pair number') +
+  geom_text(aes(label = ..count..), stat = "count", vjust = -1, colour = "black") +
+  theme(legend.direction = "horizontal",
+        legend.box = "horizontal",
+        legend.position = "top") +
+  guides(size=guide_legend(direction='horizontal')) +
+  ylim(0, max.cnt1 * 1.25) +
+  theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
+
+p1.tot <- plot_grid(p1, p1.hist, ncol = 1, nrow = 2, rel_heights = c(5,2))
+
+suppressMessages(ggsave(plot=p1.tot, filename="bc1xself_distance.pdf"))
 
 #######################
 # barcode2 with itself
@@ -102,7 +126,27 @@ p2 <- ggplot(data = ed2, aes(bc2, bc2_, fill = dist)) +
   scale_color_continuous(trans = 'reverse') +
   ggtitle(plot.title.d2)
 
-suppressMessages(ggsave(plot=p2, filename="bc2xself_distance.pdf"))
+# get max count to add some space above plot2 and show the top count
+max.cnt2 <- max(hist(ed2$dist, breaks=10, plot=FALSE)$counts)
+
+p2.hist <- ggplot(data = ed2, aes(x=dist, fill=factor(ifelse(dist>0,"different","self"),levels = c("self", "different")))) +
+  geom_bar(stat="count") +
+  scale_fill_manual(name = "type", values=c("red","grey50")) +
+  scale_x_continuous(breaks= pretty_breaks()) +
+  theme_minimal() +
+  xlab('mutual edit distance') +
+  ylab('barcode pair number') +
+  geom_text(aes(label = ..count..), stat = "count", vjust = -1, colour = "black") +
+  theme(legend.direction = "horizontal",
+        legend.box = "horizontal",
+        legend.position = "top") +
+  guides(size=guide_legend(direction='horizontal')) +
+  ylim(0, max.cnt2 * 1.25) +
+  theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
+
+p2.tot <- plot_grid(p2, p2.hist, ncol = 1, nrow = 2, rel_heights = c(5,2))
+
+suppressMessages(ggsave(plot=p2.tot, filename="bc2xself_distance.pdf"))
 
 #######################
 # barcode1 with barcode2
@@ -133,7 +177,28 @@ p3 <- ggplot(data = ed12, aes(bc1, bc2, fill = dist)) +
   scale_color_continuous(trans = 'reverse') +
   ggtitle(plot.title.d12)
 
-suppressMessages(ggsave(plot=p3, filename="bc1xbc2_distance.pdf"))
+
+# get max count to add some space above plot2 and show the top count
+max.cnt3 <- max(hist(ed12$dist, breaks=10, plot=FALSE)$counts)
+
+p3.hist <- ggplot(data = ed12, aes(x=dist, fill=factor(ifelse(dist>0,"different","self")))) +
+  geom_bar(stat="count") +
+  scale_fill_manual(name = "type", values=c("grey50","red")) +
+  scale_x_continuous(breaks= pretty_breaks()) +
+  theme_minimal() +
+  xlab('mutual edit distance') +
+  ylab('barcode pair number') +
+  geom_text(aes(label = ..count..), stat = "count", vjust = -1, colour = "black") +
+  theme(legend.direction = "horizontal",
+        legend.box = "horizontal",
+        legend.position = "top") +
+  guides(size=guide_legend(direction='horizontal')) +
+  ylim(0, max.cnt3 * 1.25) +
+  theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
+
+p3.tot <- plot_grid(p3, p3.hist, ncol = 1, nrow = 2, rel_heights = c(5,2))
+
+suppressMessages(ggsave(plot=p3.tot, filename="bc1xbc2_distance.pdf"))
 
 ################################
 # barcode1_barcode2 with itself
@@ -166,4 +231,25 @@ p4 <- ggplot(data = edmerged, aes(dual_bc, dual_bc_, fill = dist)) +
   scale_color_continuous(trans = 'reverse') +
   ggtitle(plot.title.dual)
 
-suppressMessages(ggsave(plot=p4, filename="bcdualxself-distance.pdf"))
+
+# get max count to add some space above plot2 and show the top count
+max.cnt4 <- max(hist(edmerged$dist, breaks=20, plot=FALSE)$counts)
+
+p4.hist <- ggplot(data = edmerged, aes(x=dist, fill=factor(ifelse(dist>0,"different","self")))) +
+  geom_bar(stat="count") +
+  scale_fill_manual(name = "type", values=c("grey50","red")) +
+  scale_x_continuous(breaks= pretty_breaks()) +
+  theme_minimal() +
+  xlab('mutual edit distance') +
+  ylab('merged-barcode pair number') +
+  geom_text(aes(label = ..count..), stat = "count", vjust = -1, colour = "black") +
+  theme(legend.direction = "horizontal",
+        legend.box = "horizontal",
+        legend.position = "top") +
+  guides(size=guide_legend(direction='horizontal')) +
+  ylim(0, max.cnt4 * 1.25) +
+  theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
+
+p4.tot <- plot_grid(p4, p4.hist, ncol = 1, nrow = 2, rel_heights = c(5,2))
+
+suppressMessages(ggsave(plot=p4.tot, filename="bcdualxself-distance.pdf"))
