@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 
 # script: MGI_barcode_distance.R
-# Stéphane Plaisance - VIB-Nucleomics Core - 2023-02-17 v1.00
+# St├ęphane Plaisance - VIB-Nucleomics Core - 2023-02-17 v1.00
 # visit our Git: https://github.com/Nucleomics-VIB
 
 # compute distance between all MGI barcode@1's, barcode#2's
@@ -66,7 +66,7 @@ p1 <- ggplot(data = ed1, aes(bc1, bc1_, fill = dist)) +
                        limit = c(0,10), space = "Lab",
                        midpoint = 4,
                        name="edit distance") +
-  geom_text(aes(bc1, bc1_, label = dist), color = "black", size = 1.5) +
+  geom_text(aes(bc1, bc1_, label = dist), color = "black", size = 1) +
   theme_minimal() + 
   theme(axis.text.x = element_text(color = "grey20", size = 3, angle = 45, hjust = 1, vjust = 1, face = "plain"),
         axis.text.y = element_text(color = "grey20", size = 3, angle = 0, hjust = 1, vjust = 0, face = "plain")) +
@@ -85,7 +85,7 @@ p1.hist <- ggplot(data = ed1, aes(x=dist, fill=factor(ifelse(dist>0,"different",
   theme_minimal() +
   xlab('mutual edit distance') +
   ylab('barcode pair number') +
-  geom_text(aes(label = ..count..), stat = "count", vjust = -1, colour = "black") +
+  geom_text(aes(label = after_stat(count)), stat = "count", vjust = -1, colour = "black") +
   theme(legend.direction = "horizontal",
         legend.box = "horizontal",
         legend.position = "top") +
@@ -93,7 +93,7 @@ p1.hist <- ggplot(data = ed1, aes(x=dist, fill=factor(ifelse(dist>0,"different",
   ylim(0, max.cnt1 * 1.25) +
   theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
 
-p1.tot <- plot_grid(p1, p1.hist, ncol = 1, nrow = 2, rel_heights = c(5,2))
+p1.tot <- plot_grid(p1, p1.hist, ncol = 1, nrow = 2, rel_heights = c(5,3))
 
 suppressMessages(ggsave(plot=p1.tot, filename="bc1xself_distance.pdf"))
 
@@ -117,8 +117,7 @@ p2 <- ggplot(data = ed2, aes(bc2, bc2_, fill = dist)) +
                        limit = c(0,10), space = "Lab",
                        midpoint = 4,
                        name="edit distance") +
-  geom_text(aes(bc2, bc2_, label = dist), 
-            color = "black", size = 1.5) +
+  geom_text(aes(bc2, bc2_, label = dist), color = "black", size = 1) +
   theme_minimal() + 
   theme(axis.text.x = element_text(color = "grey20", size = 3, angle = 45, hjust = 1, vjust = 1, face = "plain"),
         axis.text.y = element_text(color = "grey20", size = 3, angle = 0, hjust = 1, vjust = 0, face = "plain")) +
@@ -136,7 +135,7 @@ p2.hist <- ggplot(data = ed2, aes(x=dist, fill=factor(ifelse(dist>0,"different",
   theme_minimal() +
   xlab('mutual edit distance') +
   ylab('barcode pair number') +
-  geom_text(aes(label = ..count..), stat = "count", vjust = -1, colour = "black") +
+  geom_text(aes(label = after_stat(count)), stat = "count", vjust = -1, colour = "black") +
   theme(legend.direction = "horizontal",
         legend.box = "horizontal",
         legend.position = "top") +
@@ -144,7 +143,7 @@ p2.hist <- ggplot(data = ed2, aes(x=dist, fill=factor(ifelse(dist>0,"different",
   ylim(0, max.cnt2 * 1.25) +
   theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
 
-p2.tot <- plot_grid(p2, p2.hist, ncol = 1, nrow = 2, rel_heights = c(5,2))
+p2.tot <- plot_grid(p2, p2.hist, ncol = 1, nrow = 2, rel_heights = c(5,3))
 
 suppressMessages(ggsave(plot=p2.tot, filename="bc2xself_distance.pdf"))
 
@@ -160,7 +159,7 @@ ed12$dist <- mapply(func, ed12$bc1, ed12$bc2)
 
 # find minimum >0
 min.d12 <- min(ed12$dist[ed12$dist> 0])
-plot.title.d12 <- paste0("Mismatch number between barcode-1 and barcode-2 sequences (min:", min.d12, ")", sep="")
+plot.title.d12 <- paste0("Barcode-1 vs Barcode-2 comparison (min:", min.d12, ")", sep="")
 
 p3 <- ggplot(data = ed12, aes(bc1, bc2, fill = dist)) +
   geom_tile(color = "white") +
@@ -168,8 +167,7 @@ p3 <- ggplot(data = ed12, aes(bc1, bc2, fill = dist)) +
                        limit = c(0,10), space = "Lab",
                        midpoint = 4,
                        name="edit distance") +
-  geom_text(aes(bc1, bc2, label = dist), 
-            color = "black", size = 1.5) +
+  geom_text(aes(bc1, bc2, label = dist), color = "black", size = 1) +
   theme_minimal() + 
   theme(axis.text.x = element_text(color = "grey20", size = 3, angle = 45, hjust = 1, vjust = 1, face = "plain"),
         axis.text.y = element_text(color = "grey20", size = 3, angle = 0, hjust = 1, vjust = 0, face = "plain")) +
@@ -188,7 +186,7 @@ p3.hist <- ggplot(data = ed12, aes(x=dist, fill=factor(ifelse(dist>0,"different"
   theme_minimal() +
   xlab('mutual edit distance') +
   ylab('barcode pair number') +
-  geom_text(aes(label = ..count..), stat = "count", vjust = -1, colour = "black") +
+  geom_text(aes(label = after_stat(count)), stat = "count", vjust = -1, colour = "black") +
   theme(legend.direction = "horizontal",
         legend.box = "horizontal",
         legend.position = "top") +
@@ -196,7 +194,7 @@ p3.hist <- ggplot(data = ed12, aes(x=dist, fill=factor(ifelse(dist>0,"different"
   ylim(0, max.cnt3 * 1.25) +
   theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
 
-p3.tot <- plot_grid(p3, p3.hist, ncol = 1, nrow = 2, rel_heights = c(5,2))
+p3.tot <- plot_grid(p3, p3.hist, ncol = 1, nrow = 2, rel_heights = c(5,3))
 
 suppressMessages(ggsave(plot=p3.tot, filename="bc1xbc2_distance.pdf"))
 
@@ -222,8 +220,7 @@ p4 <- ggplot(data = edmerged, aes(dual_bc, dual_bc_, fill = dist)) +
                        limit = c(0,20), space = "Lab",
                        midpoint = 10,
                        name="edit distance") +
-  geom_text(aes(dual_bc, dual_bc_, label = dist), 
-            color = "black", size = 1.2) +
+  geom_text(aes(dual_bc, dual_bc_, label = dist), color = "black", size = 0.75) +
   theme_minimal() + 
   theme(axis.text.x = element_text(color = "grey20", size = 3, angle = 45, hjust = 1, vjust = 1, face = "plain"),
         axis.text.y = element_text(color = "grey20", size = 3, angle = 0, hjust = 1, vjust = 0, face = "plain")) +
@@ -242,7 +239,7 @@ p4.hist <- ggplot(data = edmerged, aes(x=dist, fill=factor(ifelse(dist>0,"differ
   theme_minimal() +
   xlab('mutual edit distance') +
   ylab('merged-barcode pair number') +
-  geom_text(aes(label = ..count..), stat = "count", vjust = -1, colour = "black") +
+  geom_text(aes(label = after_stat(count)), stat = "count", vjust = -1, colour = "black") +
   theme(legend.direction = "horizontal",
         legend.box = "horizontal",
         legend.position = "top") +
@@ -250,6 +247,6 @@ p4.hist <- ggplot(data = edmerged, aes(x=dist, fill=factor(ifelse(dist>0,"differ
   ylim(0, max.cnt4 * 1.25) +
   theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
 
-p4.tot <- plot_grid(p4, p4.hist, ncol = 1, nrow = 2, rel_heights = c(5,2))
+p4.tot <- plot_grid(p4, p4.hist, ncol = 1, nrow = 2, rel_heights = c(5,3))
 
 suppressMessages(ggsave(plot=p4.tot, filename="bcdualxself-distance.pdf"))
