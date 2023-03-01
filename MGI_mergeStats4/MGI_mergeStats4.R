@@ -33,7 +33,7 @@ BarcodeStatMerge <- data.table::rbindlist(lapply(vectorBarcodeStat, data.table::
 # Merge Total rows separately, plot and save to file
 BarcodeStatTotal <- BarcodeStatMerge[grepl("Total", BarcodeStatMerge$`#Barcode`),]
 colnames(BarcodeStatTotal)[1] <- "Lane"
-BarcodeStatTotal$`#Barcode` <- seq(1,nrow(BarcodeStatTotal))
+BarcodeStatTotal$Lane <- seq(1,nrow(BarcodeStatTotal))
 
 # calculate the real total across all lanes includking non-barcoded
 # = sum(Total/percentage%*100)
