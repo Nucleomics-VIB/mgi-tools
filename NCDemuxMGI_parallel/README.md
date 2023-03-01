@@ -22,7 +22,7 @@ The sample to barcode list is provided as a two-column tab-separated text file i
 
 REM: please report any misbehaviour so that I can improve this code.
 
-_SP@NC last edit 2023-02-13_
+_SP@NC last edit 2023-03-01_
 
 <hr>
 
