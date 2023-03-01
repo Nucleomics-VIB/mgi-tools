@@ -1,6 +1,6 @@
-# NCDemuxMGI_parallel.sh
-[(Nucleomics-VIB)](https://github.com/Nucleomics-VIB)
 ![mgi-tools](../pictures/MGI.png) - MGI-Tools
+
+[(Nucleomics-VIB)](https://github.com/Nucleomics-VIB)
 ==========
 
 # Demultiplexing a MGI run OFF device
