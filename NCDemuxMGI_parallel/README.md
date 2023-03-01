@@ -1,9 +1,5 @@
-![mgi-tools](../pictures/MGI.png) - MGI-Tools
-
 [(Nucleomics-VIB)](https://github.com/Nucleomics-VIB)
 ==========
-
-# Demultiplexing a MGI run OFF device
 
 NCDemuxMGI_parallel.sh: a custom script to run the MGI off-device demultiplexer in parallel for 4 Lanes
 
@@ -15,18 +11,15 @@ The sequencing includes two barcodes of 10 bases each located at the end of read
 
 ## Running
 
-The script initializes and takes all necessary variable values from the **run_config.yaml** file (using custom functions sourced in the script)
+The script initializes and takes all necessary variable values from the **run_config.yaml** file (using custom functions sourced in the script). **Please review the run_config.yaml file and edit what needs be before running, this code is not performing any check on the provided values**
 
 The sample to barcode list is provided as a two-column tab-separated text file in which column #1 reports sample labels and column#2 the merged string of barcode#1 and barcode#2 (both provided in Forward orientation).
 
-**Please review the run_config.yaml file and edit what needs be before running, this code is not performing any check on the provided values**
 
 ## Requirements
 
-The script expects the MGI SplitBarcode executable to be installed and running on the machine (its path should be edited in run_config.yaml)
-
-GNU parallel is used to execute 4 jobs, one for each lane
-
+* The script expects the MGI SplitBarcode executable (version 2) to be installed and running on the machine (its path should be edited in run_config.yaml)
+* GNU parallel is used to execute 4 jobs, one for each lane
 
 REM: please report any misbehaviour so that I can improve this code.
 
