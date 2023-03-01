@@ -1,0 +1,72 @@
+## run_config.yaml
+# global definitions parsed at main script startup
+# leading to definition of runtime variables by the functions
+# NOTE: most of the variables below are used in custom functions and/or Action scripts 
+# and should be present to get a functional program
+
+# example
+#----------------
+#more:
+#  option1: value1
+#  option2: value2
+#----------------
+# is evaluated at runtime:
+# more_option1=value1 (callable from ${more_option1})
+# more_option2=value2 (callable from ${more_option1})
+
+###########################
+# locate the MGI executable 
+###########################
+
+SplitBarcode_v2: "/opt/biotools/SplitBarcode_v2/bin/splitBarcode"
+
+##############
+# INs and OUTs
+##############
+
+infolder: "."
+outfolder: "./results"
+barcodelist: "barcodes.txt"
+
+###########################
+# read variable definitions
+###########################
+
+read1:
+  length: 28
+
+read2:
+  length: 110
+  
+##############################
+# barcode variable definitions
+##############################
+
+# do barcodes need reverse-complementation (-r)
+# set to Y for 10x data where barcodes are provided as Forward sequences 
+revcomp: Y
+
+# add the barcode pair in the read name (--umi)
+addumi: Y
+
+barcode1:
+  length: 10
+  inread: 2
+  atpos: 91
+  maxerr: 1
+  
+barcode2:
+  length: 10
+  inread: 2
+  atpos: 101
+  maxerr: 1
+
+################################################
+# max resources to be used for each parallel job
+################################################
+
+maxnthr: 20
+maxmem: 100
+
+
+
