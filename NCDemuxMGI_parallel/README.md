@@ -1,19 +1,21 @@
 **NCDemuxMGI_parallel.sh**: a custom script to run the MGI off-device demultiplexer in parallel for 4 Lanes
 
-## Remarks
+<hr>
+
+### Remarks
 
 The code developed here applies to 10X data sequenced with paired reads of length 28 and 110 bases respectively.
 
 The sequencing includes two barcodes of 10 bases each located at the end of read-2 (between position 90 and 110)
 
-## Running
+### Running
 
 The script initializes and takes all necessary variable values from the **run_config.yaml** file (using custom functions sourced in the script). **Please review the run_config.yaml file and edit what needs be before running, this code is not performing any check on the provided values**
 
 The sample to barcode list is provided as a two-column tab-separated text file in which column #1 reports sample labels and column#2 the merged string of barcode#1 and barcode#2 (both provided in Forward orientation).
 
 
-## Requirements
+### Requirements
 
 * The script expects the MGI SplitBarcode executable (version 2) to be installed and running on the machine (its path should be edited in run_config.yaml)
 * GNU parallel is used to execute 4 jobs, one for each lane
