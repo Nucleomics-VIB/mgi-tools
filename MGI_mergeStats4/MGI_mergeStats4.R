@@ -28,6 +28,49 @@ vectorBarcodeStat <- list.files(path = '.',
 
 # merge all BarcodeStat.txt files to a single file using data.table fread
 BarcodeStatMerge <- data.table::rbindlist(lapply(vectorBarcodeStat, data.table::fread))
+
+# Report totals per lane
+# Merge Total rows separately, plot and save to file
+BarcodeStatTotal <- BarcodeStatMerge[grepl("Total", BarcodeStatMerge$`#Barcode`),]
+colnames(BarcodeStatTotal)[1] <- "Lane"
+BarcodeStatTotal$`#Barcode` <- seq(1,nrow(BarcodeStatTotal))
+
+# calculate the real total across all lanes includking non-barcoded
+# = sum(Total/percentage%*100)
+#grandTotal <- BarcodeStatTotal %>%
+#  {.[,4]/.[,5]*100} %>%
+#  sum
+
+##############################
+# plot total densities
+##############################
+
+plot.totals <- BarcodeStatTotal[,1:3] %>% reshape2::melt(id.vars = "Lane")
+colnames(plot.totals) <- c("lane", "type", "count")
+
+outfile <- "BarcodeStat_per_lane.pdf"
+pdf(file=outfile, width = 10, height = 5, bg = "white")
+
+ggplot(plot.totals, aes(x = lane, y= count, fill = forcats::fct_rev(type))) + 
+  geom_bar(width=0.7,stat = "identity") +
+  scale_y_continuous(expand = c(0,0)) +
+  coord_flip() +
+  theme_bw() +
+  theme(axis.text.y=element_text(angle = 0, hjust = 0, size=5)) +
+  theme(legend.title=element_blank()) +
+  theme(legend.position = "top") +
+  theme(legend.key.size = unit(0.25, 'cm')) +
+  guides(fill = guide_legend(reverse = TRUE)) +
+  xlab("lane") +
+  ylab("read (pair) count") +
+  ggtitle("MGI400 Total Barcode counts")
+
+null <- dev.off()
+
+# save to csv files
+outfile <- "BarcodeTotalCounts.csv"
+write.csv(BarcodeStatTotal, file = outfile, row.names = FALSE)
+
 # remove Total rows and zero percentages
 BarcodeStatMerge <- BarcodeStatMerge[!grepl("Total", BarcodeStatMerge$`#Barcode`),]
 BarcodeStatMerge$`Percentage(%)` <- rep("0",nrow(BarcodeStatMerge))
