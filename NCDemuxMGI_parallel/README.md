@@ -1,7 +1,4 @@
-[(Nucleomics-VIB)](https://github.com/Nucleomics-VIB)
-==========
-
-NCDemuxMGI_parallel.sh: a custom script to run the MGI off-device demultiplexer in parallel for 4 Lanes
+**NCDemuxMGI_parallel.sh**: a custom script to run the MGI off-device demultiplexer in parallel for 4 Lanes
 
 ## Remarks
 
@@ -34,4 +31,3 @@ _SP@NC last edit 2023-02-13_
 ![Creative Commons License](http://i.creativecommons.org/l/by-sa/3.0/88x31.png?raw=true)
 
 This work is licensed under a [Creative Commons Attribution-ShareAlike 3.0 Unported License](http://creativecommons.org/licenses/by-sa/3.0/).
-
