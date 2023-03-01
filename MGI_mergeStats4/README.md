@@ -19,7 +19,7 @@ The resulting files are:
 
 ### Requirements
 
-* The script requires several **R** packages
+The script requires several **R** packages
 
 * data.table
 * dplyr
