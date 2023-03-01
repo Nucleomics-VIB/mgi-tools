@@ -10,6 +10,12 @@ The code developed here applies to results from the script **NCDemuxMGI_parallel
 
 The script should be run from the folder where the 4-Lanes of demultiplexed data are located. It can also be run from within one of the Lane folders and will then only process a single BarcodeStat.txt file and produce text results and a plot
 
+The resulting files are:
+
+* BarcodeStat_density.pdf
+* BarcodeStat_merged.csv
+* SequenceStat_merged.csv
+* SequenceStat_top100_undecoded.csv
 
 ### Requirements
 
