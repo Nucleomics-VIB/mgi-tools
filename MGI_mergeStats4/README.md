@@ -8,8 +8,7 @@ The code developed here applies to results from the script **NCDemuxMGI_parallel
 
 ### Running
 
-The script should be run from the folder where the 4-Lanes of demultiplexed data are located
-The script can also be run from within one of the Lanes and will then only process a single BarcodeStat.txt file and produce text results and a plot
+The script should be run from the folder where the 4-Lanes of demultiplexed data are located. It can also be run from within one of the Lane folders and will then only process a single BarcodeStat.txt file and produce text results and a plot
 
 
 ### Requirements
