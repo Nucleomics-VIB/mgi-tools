@@ -14,6 +14,17 @@ The script initializes and takes all necessary variable values from the **run_co
 
 The sample to barcode list is provided as a two-column tab-separated text file in which column #1 reports sample labels and column#2 the merged string of barcode#1 and barcode#2 (both provided in Forward orientation).
 
+```
+./NCDemuxMGI_parallel.sh -h
+# Usage: NCDemuxMGI_parallel.sh ...
+#
+# script version 1.0_2023-03-01
+#
+# [optional: -c <path to run_config.yaml (default to run_config.yaml in current folder)>]
+# [optional: -l => debug: lists all variables and ends]
+# [optional: -h <this help text>]
+```
+
 **Note:** A command dry call with the **-l** argument will list all variables from the yaml file and their values and stop
 
 ### Requirements
