@@ -20,11 +20,11 @@ version <- "v1.00, 2023-02-10"
 ##############################
 
 vectorBarcodeStat <- list.files(path = '.', 
-                pattern = "BarcodeStat.txt" ,
-                full.names = FALSE, 
-                recursive = TRUE,
-                ignore.case = FALSE,
-                include.dirs = TRUE)
+                                pattern = "BarcodeStat.txt" ,
+                                full.names = FALSE, 
+                                recursive = TRUE,
+                                ignore.case = FALSE,
+                                include.dirs = TRUE)
 
 # merge all BarcodeStat.txt files to a single file using data.table fread
 BarcodeStatMerge <- data.table::rbindlist(lapply(vectorBarcodeStat, data.table::fread))
@@ -35,7 +35,10 @@ BarcodeStatTotal <- BarcodeStatMerge[grepl("Total", BarcodeStatMerge$`#Barcode`)
 colnames(BarcodeStatTotal)[1] <- "Lane"
 BarcodeStatTotal$Lane <- seq(1,nrow(BarcodeStatTotal))
 
-# calculate the real total across all lanes includking non-barcoded
+# add undetermined based on % value
+BarcodeStatTotal$undetermined <- (BarcodeStatTotal$Total * 100 / BarcodeStatTotal$`Percentage(%)`) - BarcodeStatTotal$Total
+
+# calculate the real total across all lanes including non-barcoded
 # = sum(Total/percentage%*100)
 #grandTotal <- BarcodeStatTotal %>%
 #  {.[,4]/.[,5]*100} %>%
@@ -45,7 +48,7 @@ BarcodeStatTotal$Lane <- seq(1,nrow(BarcodeStatTotal))
 # plot total densities
 ##############################
 
-plot.totals <- BarcodeStatTotal[,1:3] %>% reshape2::melt(id.vars = "Lane")
+plot.totals <- BarcodeStatTotal[,c(1:3,6)] %>% reshape2::melt(id.vars = "Lane")
 colnames(plot.totals) <- c("lane", "type", "count")
 
 outfile <- "BarcodeStat_per_lane.pdf"
@@ -118,11 +121,11 @@ null <- dev.off()
 ##############################
 
 vectorSequenceStat <- list.files(path = '.',
-                            pattern = "SequenceStat.txt" ,
-                            full.names = FALSE, 
-                            recursive = TRUE,
-                            ignore.case = FALSE,
-                            include.dirs = TRUE)
+                                 pattern = "SequenceStat.txt" ,
+                                 full.names = FALSE, 
+                                 recursive = TRUE,
+                                 ignore.case = FALSE,
+                                 include.dirs = TRUE)
 
 # merge all SequenceStat.txt files to a single file
 SequenceStatMerge <- data.table::rbindlist(lapply(vectorSequenceStat, data.table::fread))
@@ -146,6 +149,6 @@ topUndecoded <- SequenceStat %>%
   filter(Barcode == "undecoded") %>%
   arrange(desc(Count)) %>%
   head(100)
-  
+
 outfile <- "SequenceStat_top100_undecoded.csv"
 write.csv(topUndecoded, file = outfile, row.names = FALSE)
