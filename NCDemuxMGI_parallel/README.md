@@ -14,6 +14,7 @@ The script initializes and takes all necessary variable values from the **run_co
 
 The sample to barcode list is provided as a two-column tab-separated text file in which column #1 reports sample labels and column#2 the merged string of barcode#1 and barcode#2 (both provided in Forward orientation).
 
+**Note:** A command dry call with the **-l** argument will list all variables from the yaml file and their values and stop
 
 ### Requirements
 
