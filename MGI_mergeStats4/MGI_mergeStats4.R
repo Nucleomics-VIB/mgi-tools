@@ -36,7 +36,9 @@ colnames(BarcodeStatTotal)[1] <- "Lane"
 BarcodeStatTotal$Lane <- seq(1,nrow(BarcodeStatTotal))
 
 # add undetermined based on % value
-BarcodeStatTotal$undetermined <- (BarcodeStatTotal$Total * 100 / BarcodeStatTotal$`Percentage(%)`) - BarcodeStatTotal$Total
+BarcodeStatTotal$undecoded <- round(
+  (BarcodeStatTotal$Total * 100 / BarcodeStatTotal$`Percentage(%)`) - BarcodeStatTotal$Total,
+  digits = 0)
 
 # calculate the real total across all lanes including non-barcoded
 # = sum(Total/percentage%*100)
@@ -56,17 +58,19 @@ pdf(file=outfile, width = 10, height = 5, bg = "white")
 
 ggplot(plot.totals, aes(x = lane, y= count, fill = forcats::fct_rev(type))) + 
   geom_bar(width=0.7,stat = "identity") +
+  scale_x_continuous(breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1))))) +
   scale_y_continuous(expand = c(0,0)) +
   coord_flip() +
   theme_bw() +
-  theme(axis.text.y=element_text(angle = 0, hjust = 0, size=5)) +
+  theme(axis.text.x=element_text(angle = 0, hjust = 0, size=10)) +
+  theme(axis.text.y=element_text(angle = 0, hjust = 0, size=10)) +
   theme(legend.title=element_blank()) +
   theme(legend.position = "top") +
   theme(legend.key.size = unit(0.25, 'cm')) +
   guides(fill = guide_legend(reverse = TRUE)) +
-  xlab("lane") +
-  ylab("read (pair) count") +
-  ggtitle("MGI400 Total Barcode counts")
+  xlab("Lane") +
+  ylab("read (pair) count")+
+  ggtitle("MGI400 Total Barcode counts per Lane")
 
 null <- dev.off()
 
