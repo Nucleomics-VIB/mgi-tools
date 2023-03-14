@@ -238,7 +238,7 @@ while(<$rd1>){
 	my $qual2= <$rd2>;
 	
 	# chomp all strings
-	chomp($head1,$seq1,$plus1,$qual1,$head2,$seq2,$plus2,$qual2);
+	chomp($head1,$seq1,$plus1,$qual1,$head2,$seq2,$plus2,$qual2,$dualbc);
 
 	# count read pair
 	$totalReadsNum ++;
@@ -258,9 +258,14 @@ while(<$rd1>){
 	my $clipseq2=substr($seq2,0,$fc-1); #.substr($seq2,$fc+$barcode_len-1,);
 	my $clipqual2=substr($qual2,0,$fc-1); #.substr($qual2,$fc+$barcode_len-1,);	
 	
-	# add merged barcode sequence to read1 name
+	# add merged barcode sequence to read name
 	$head1 = $head1." ".$barseq;
 	$head2 = $head2." ".$barseq;
+	
+	# for next version: format barcodes as in new executable
+	#$dualbc = substr($barseq,0,$barcode_len1-1)."+".substr($barseq,$barcode_len1,$barcode_len2-1);
+	#$head1 = $head1." 1:N:0:".$dualbc;
+	#$head2 = $head2." 2:N:0:".$dualbc;
 	
 	#######################################
 	# barcode is found in the allowed list
