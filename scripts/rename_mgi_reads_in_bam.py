@@ -3,6 +3,8 @@
 # script rename_mgi_reads_in_bam.py
 # SP@NC 2023-06-02, v1.0
 
+# !!! at work, not validated yet
+
 import sys
 import io
 import re
