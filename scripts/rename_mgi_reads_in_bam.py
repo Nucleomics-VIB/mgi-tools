@@ -3,14 +3,21 @@
 # script rename_mgi_reads_in_bam.py
 # SP@NC 2023-06-02, v1.0
 
-# !!! at work, not validated yet
-
 import sys
+import os
 import io
 import re
 import pysam
 
-def rename_read_names(input_bam, output_bam, regex_pattern, replace_pattern):
+# Check if an argument is provided
+if len(sys.argv) < 2:
+    print("Error: No input BAM file provided.")
+    sys.exit(1)
+
+# Get the input file path from the command-line argument
+input_bam_file = sys.argv[1]
+
+def rename_read_names(input_bam, output_bam, regex_pattern):
     # Open the input BAM file
     input_samfile = pysam.AlignmentFile(input_bam, "rb")
 
@@ -30,8 +37,7 @@ def rename_read_names(input_bam, output_bam, regex_pattern, replace_pattern):
             captured_substrings = match.groups()
 
             # Perform any required modifications on the captured substrings
-            # For example, you can use replace_pattern to rename the read name
-            new_read_name = replace_pattern.format(*captured_substrings)
+            new_read_name = f'V{match.group(1)}:{match.group(2)}:{match.group(2)}:{match.group(3)}:{match.group(6)}:{match.group(4)}:{match.group(5)}'
 
             # Update the read name
             read.query_name = new_read_name
@@ -43,10 +49,8 @@ def rename_read_names(input_bam, output_bam, regex_pattern, replace_pattern):
     input_samfile.close()
     output_samfile.close()
 
-# Example usage
-input_bam_file = "input.bam"
+# Running part
 output_bam_file = "output.bam"
-regex_pattern = r'@V([0-9]{4})([0-9]{5})L([1-4])C([0-9]{3})R([0-9]{3})([0-9]+)'
-replace_pattern = r"\1:\2:\3:\6:\4:\5"
+regex_pattern = r'V([0-9]{4})([0-9]{5})L([1-4])C([0-9]{3})R([0-9]{3})([0-9]+)'
 
-rename_read_names(input_bam_file, output_bam_file, regex_pattern, replace_pattern)
+rename_read_names(input_bam_file, output_bam_file, regex_pattern)
