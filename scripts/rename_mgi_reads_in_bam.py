@@ -17,6 +17,9 @@ if len(sys.argv) < 2:
 # Get the input file path from the command-line argument
 input_bam_file = sys.argv[1]
 
+base_name = os.path.splitext(input_bam_file)[0]
+output_bam_file = base_name + "_ren.bam"
+
 def rename_read_names(input_bam, output_bam, regex_pattern):
     # Open the input BAM file
     input_samfile = pysam.AlignmentFile(input_bam, "rb")
@@ -50,7 +53,6 @@ def rename_read_names(input_bam, output_bam, regex_pattern):
     output_samfile.close()
 
 # Running part
-output_bam_file = "output.bam"
 regex_pattern = r'V([0-9]{4})([0-9]{5})L([1-4])C([0-9]{3})R([0-9]{3})([0-9]+)'
 
 rename_read_names(input_bam_file, output_bam_file, regex_pattern)
