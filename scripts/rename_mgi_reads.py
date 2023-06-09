@@ -10,7 +10,8 @@ import io
 
 def rename_mgi_reads(file_path):
     # MGI pattern
-    mgi_pattern = r'@V([0-9]{4})([0-9]{5})L([1-2])C([0-9]{3})R([0-9]{3})([0-9]{8})/([1-2])'
+    # V1000 02807 L3 C002 R026 632273
+    mgi_pattern = r'@V([0-9]{4})([0-9]{5})L([1-4])C([0-9]{3})R([0-9]{3})([0-9]+)'
 
     # Process the file as a stream
     if file_path == '-':
@@ -33,7 +34,7 @@ def rename_mgi_reads(file_path):
             if line_num % 4 == 0:
                 match = re.match(mgi_pattern, line)
                 if match:
-                    illumina_name = f'@{match.group(1)}:{match.group(2)}:{match.group(3)}:{match.group(4)}:{match.group(5)}:{match.group(6)} {match.group(7)}'
+                    illumina_name = f'@{match.group(1)}:{match.group(2)}:{match.group(3)}:{match.group(6)}:{match.group(4)}:{match.group(5)}'
                     print(illumina_name)
                 else:
                     print(line)
